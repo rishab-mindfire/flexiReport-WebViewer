@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>ERD Editor — final</title>
+    <!-- X6 CSS -->
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/@antv/x6/dist/x6.css" />
+    <!-- styles -->
+    <link rel="stylesheet" href="style.css" />
+  </head>
+
+  <body>
+    <div id="topbar">
+      <button id="btnLoadDemo">Load demo.json</button>
+      <button id="btnExport">Export JSON</button>
+      <button id="btnCenter">Center</button>
+      <span class="info"
+        >Right ports = OUT (start), Left ports = IN (target).</span
+      >
+    </div>
+    <div id="container"></div>
+    <!-- X6 -->
+    <script src="https://cdn.jsdelivr.net/npm/@antv/x6/dist/x6.js"></script>
+    <!-- ERD logic js -->
+    <script src="erd-graph.js"></script>
+  </body>
+</html>
