@@ -129,7 +129,9 @@ body {
 .er-fields-container {
   padding: 8px;
 }
-
+tspan {
+  font-size: 18px;
+}
 .er-field {
   padding: 6px;
   border-bottom: 1px solid #eee;

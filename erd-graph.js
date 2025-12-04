@@ -28,7 +28,6 @@ const graph = new Graph({
       { color: '#ddd', thickness: 1, factor: 4 },
     ],
   },
-  panning: { enabled: true, modifiers: 'shift' },
   mousewheel: { enabled: true, modifiers: ['ctrl', 'meta'] },
   connecting: {
     snap: true,
@@ -37,20 +36,6 @@ const graph = new Graph({
     allowMulti: true,
     connector: { name: 'rounded', args: { radius: 8 } },
     router: { name: 'manhattan' },
-    createEdge() {
-      const e = graph.createEdge({
-        attrs: {
-          line: {
-            stroke: '#A2B1C3',
-            strokeWidth: 2,
-            targetMarker: { name: 'classic', size: 8 },
-          },
-        },
-        data: { relation: '=' },
-      });
-      updateEdgeLabelAndStyle(e, '=');
-      return e;
-    },
     validateConnection({ sourcePort, targetPort }) {
       return (
         String(sourcePort).includes('.R.') && String(targetPort).includes('.L.')
@@ -83,17 +68,19 @@ function makePortsForTable(n) {
   const items = [];
   (n.fields || []).forEach((f, i) => {
     const fid = f.id || f.name;
-    if (!n.baseTable)
+    if (!n.baseTable) {
       items.push({
         id: `${n.id}.L.${fid}`,
         group: 'left',
         args: { y: 58 + i * 36 },
       });
-    items.push({
-      id: `${n.id}.R.${fid}`,
-      group: 'right',
-      args: { y: 58 + i * 36 },
-    });
+    } else {
+      items.push({
+        id: `${n.id}.R.${fid}`,
+        group: 'right',
+        args: { y: 58 + i * 36 },
+      });
+    }
   });
   return items;
 }
@@ -148,7 +135,11 @@ function updateEdgeLabelAndStyle(edge, relation) {
     {
       position: 0.5,
       attrs: {
-        text: { text: relation || '', fill: '#0f172a', fontWeight: '700' },
+        text: {
+          text: relation || '',
+          fill: '#0f172a',
+          fontWeight: '700',
+        },
         rect: { fill: '#f8fafc', stroke: '#cbd5e1', rx: 6, ry: 6 },
       },
     },
@@ -231,6 +222,7 @@ graph.on('edge:connected', ({ edge }) => {
   updateEdgeLabelAndStyle(edge, edge.getData()?.relation || '=');
   addRemoveButton(edge);
 });
+
 graph.on('edge:click', ({ edge, e }) => {
   selectedEdge = edge;
   relationTypeSelect.value = edge.getData()?.relation || '=';
