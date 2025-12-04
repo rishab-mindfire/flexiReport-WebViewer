@@ -1,19 +1,73 @@
-// =====================
-// ERD Graph
-// =====================
-let currentGraphData = null;
+const { Graph } = window.X6;
 
+// DOM refs
+const container = document.getElementById('container');
+const edgeControls = document.getElementById('edge-controls');
+const relationTypeSelect = document.getElementById('relation-type');
+const btnSaveRelation = document.getElementById('btnSaveRelation');
+const btnCancelRelation = document.getElementById('btnCancelRelation');
+const deleteModal = document.getElementById('delete-modal');
+const btnConfirmDelete = document.getElementById('btnConfirmDelete');
+const btnCancelDelete = document.getElementById('btnCancelDelete');
+
+let selectedEdge = null;
+let edgeToDelete = null;
+
+// --------------------------
+// Graph init
+// --------------------------
+const graph = new Graph({
+  container,
+  grid: {
+    visible: true,
+    type: 'doubleMesh',
+    args: [
+      { color: '#eee', thickness: 1 },
+      { color: '#ddd', thickness: 1, factor: 4 },
+    ],
+  },
+  panning: { enabled: true, modifiers: 'shift' },
+  mousewheel: { enabled: true, modifiers: ['ctrl', 'meta'] },
+  connecting: {
+    snap: true,
+    allowBlank: false,
+    allowLoop: false,
+    allowMulti: true,
+    connector: { name: 'rounded', args: { radius: 8 } },
+    router: { name: 'manhattan' },
+    createEdge() {
+      const e = graph.createEdge({
+        attrs: {
+          line: {
+            stroke: '#A2B1C3',
+            strokeWidth: 2,
+            targetMarker: { name: 'classic', size: 8 },
+          },
+        },
+        data: { relation: '=' },
+      });
+      applyEdgeLabels(e, '=');
+      return e;
+    },
+    validateConnection({ sourcePort, targetPort }) {
+      return (
+        String(sourcePort).includes('.R.') && String(targetPort).includes('.L.')
+      );
+    },
+  },
+  selecting: { enabled: true, multiple: false },
+});
+
+// --------------------------
+// Node HTML builder
+// --------------------------
 function buildTableHtml(table) {
   const fieldsHtml = (table.fields || [])
     .map(
-      (f) => `
-      <div class="er-field" data-name="${f.id || f.name}">
-        <span>${f.name}</span>
-      </div>
-    `
+      (f) =>
+        `<div class="er-field" data-name="${f.id || f.name}">${f.name}</div>`
     )
     .join('');
-
   return `
     <div class="er-table ${table.baseTable ? 'base-table' : ''}">
       <div class="er-header">${table.name}</div>
@@ -22,186 +76,111 @@ function buildTableHtml(table) {
   `;
 }
 
-const { Graph } = window.X6;
-
-const graph = new Graph({
-  container: document.getElementById('container'),
-  grid: true,
-  panning: true,
-  mousewheel: { enabled: true, modifiers: 'ctrl' },
-  connecting: {
-    allowBlank: false,
-    allowLoop: false,
-    allowMulti: true,
-    highlight: true,
-    connector: { name: 'normal' },
-    createEdge() {
-      return graph.createEdge({
-        attrs: {
-          line: {
-            stroke: '#A2B1C3',
-            strokeWidth: 2,
-            targetMarker: { name: 'classic', size: 8 },
-          },
-        },
+// --------------------------
+// Ports
+// --------------------------
+function makePortsForTable(n) {
+  const items = [];
+  (n.fields || []).forEach((f, i) => {
+    const fid = f.id || f.name;
+    if (!n.baseTable)
+      items.push({
+        id: `${n.id}.L.${fid}`,
+        group: 'left',
+        args: { y: 58 + i * 36 },
       });
-    },
-
-    validateConnection({ sourcePort, targetPort, targetCell }) {
-      if (!sourcePort || !targetPort) return false;
-      if (targetCell?.data?.baseTable) return false;
-      return (
-        String(sourcePort).includes('.R.') && String(targetPort).includes('.L.')
-      );
-    },
-  },
-});
-
-// ---------------------
-// LOAD JSON DATA
-// ---------------------
-function loadFromJSON(data) {
-  graph.clearCells();
-  const headerHeight = 36;
-  const rowHeight = 32;
-  const nodeWidth = 250;
-  const nodesArr =
-    data.nodes ??
-    (data.tables || []).map((t) => ({
-      id: t.id,
-      name: t.name,
-      baseTable: t.baseTable || false,
-      position: t.position,
-      fields: (t.fields || []).map((f) => ({
-        id: f.id || f.name,
-        name: f.name,
-      })),
-    }));
-
-  const edgesArr =
-    data.edges ??
-    (data.links || []).map((l) => {
-      const parse = (v) => {
-        if (typeof v === 'string') {
-          const [table, field] = v.split('.');
-          return { table, field };
-        }
-        return v;
-      };
-
-      return {
-        id: l.id || `e_${Math.random().toString(36).slice(2, 9)}`,
-        source: parse(l.source),
-        target: parse(l.target),
-      };
-    });
-
-  // ---------------------
-  // CREATE NODES
-  // ---------------------
-
-  nodesArr.forEach((n, i) => {
-    const totalHeight = headerHeight + (n.fields?.length || 0) * rowHeight;
-    let portItems = [];
-    (n.fields || []).forEach((f, i) => {
-      const y = headerHeight + i * rowHeight + rowHeight / 2;
-      const fid = f.id || f.name;
-      if (!n.baseTable)
-        portItems.push({ id: `${n.id}.L.${fid}`, group: 'left', args: { y } });
-      portItems.push({ id: `${n.id}.R.${fid}`, group: 'right', args: { y } });
-    });
-
-    graph.addNode({
-      id: n.id,
-      shape: 'html',
-      x: n.baseTable ? 120 : n.position?.x ?? 40 + i * 360,
-      y: n.position?.y ?? 40,
-      width: nodeWidth,
-      height: totalHeight,
-      html: buildTableHtml(n),
-      data: n,
-      ports: {
-        groups: {
-          left: {
-            position: { name: 'absolute', args: { x: 0, y: headerHeight } },
-            attrs: {
-              circle: {
-                magnet: 'passive',
-                r: 6,
-                stroke: '#1890ff',
-                fill: 'white',
-              },
-            },
-          },
-
-          right: {
-            position: {
-              name: 'absolute',
-              args: { x: nodeWidth, y: headerHeight },
-            },
-            attrs: {
-              circle: { magnet: true, r: 6, stroke: '#1890ff', fill: 'white' },
-            },
-          },
-        },
-        items: portItems,
-      },
+    items.push({
+      id: `${n.id}.R.${fid}`,
+      group: 'right',
+      args: { y: 58 + i * 36 },
     });
   });
-
-  // ---------------------
-  // CREATE EDGES
-  // ---------------------
-  edgesArr.forEach((e) => {
-    const edge = graph.addEdge({
-      id: e.id,
-      source: {
-        cell: e.source.table,
-        port: `${e.source.table}.R.${e.source.field}`,
-      },
-
-      target: {
-        cell: e.target.table,
-        port: `${e.target.table}.L.${e.target.field}`,
-      },
-
-      attrs: {
-        line: {
-          stroke: '#A2B1C3',
-          strokeWidth: 2,
-          targetMarker: { name: 'classic', size: 8 },
-        },
-      },
-    });
-
-    addRemoveButton(edge);
-  });
-
-  graph.centerContent();
+  return items;
 }
 
-// ---------------------
-//REMOVE BUTTON
-// ---------------------
+// --------------------------
+// Add node
+// --------------------------
+function addTableNode(n) {
+  const headerHeight = 42;
+  const rowHeight = 36;
+  const totalH = headerHeight + (n.fields?.length || 1) * rowHeight + 10;
+
+  graph.addNode({
+    id: n.id,
+    shape: 'html',
+    x: n.position?.x ?? 60,
+    y: n.position?.y ?? 60,
+    width: 260,
+    height: totalH,
+    html: buildTableHtml(n),
+    data: n,
+    ports: {
+      groups: {
+        left: {
+          position: { name: 'absolute', args: { x: 0, y: headerHeight } },
+          attrs: {
+            circle: {
+              magnet: 'passive',
+              r: 6,
+              stroke: '#0e7490',
+              fill: '#fff',
+            },
+          },
+        },
+        right: {
+          position: { name: 'absolute', args: { x: 260, y: headerHeight } },
+          attrs: {
+            circle: { magnet: true, r: 6, stroke: '#0e7490', fill: '#fff' },
+          },
+        },
+      },
+      items: makePortsForTable(n),
+    },
+  });
+}
+
+// --------------------------
+// Edge labels (relationship type)
+// --------------------------
+function applyEdgeLabels(edge, relationText) {
+  edge.setLabels([
+    {
+      position: 0.5,
+      attrs: {
+        text: {
+          text: relationText || '',
+          fill: '#0f172a',
+
+          fontWeight: '700',
+        },
+        rect: {
+          fill: '#f8fafc',
+          stroke: '#cbd5e1',
+          rx: 6,
+          ry: 6,
+        },
+      },
+    },
+  ]);
+  edge.setData({ relation: relationText });
+}
+
+// --------------------------
+// Add remove button
+// --------------------------
 function addRemoveButton(edge) {
   edge.removeTools();
   edge.addTools([
     {
       name: 'button-remove',
       args: {
-        distance: 0.5,
         markup: [
           {
             tagName: 'circle',
             selector: 'button',
-            attrs: {
-              r: 10,
-              fill: '#ff4d4f',
-              stroke: '#fff',
-              cursor: 'pointer',
-            },
+            attrs: { r: 10, fill: '#ef4444', cursor: 'pointer' },
           },
-
           {
             tagName: 'text',
             selector: 'icon',
@@ -215,134 +194,130 @@ function addRemoveButton(edge) {
             },
           },
         ],
+        distance: 0.6, // slightly further from label
+        offset: { x: 40, y: 0 },
+        onClick: () => {
+          edgeToDelete = edge;
+          deleteModal.classList.remove('hidden');
+        },
       },
     },
   ]);
 }
 
-// ---------------------
-//  EDGE CLICK TO DELETE
-// ---------------------
-graph.on('edge:tool:button-remove:pointerdown', ({ edge }) => {
-  if (!edge) return;
-  if (confirm('Delete this relationship?')) edge.remove();
+// --------------------------
+// Edge events
+// --------------------------
+graph.on('edge:connected', ({ edge }) => {
+  applyEdgeLabels(edge, edge.getData()?.relation || '=');
+  addRemoveButton(edge);
+});
+graph.on('edge:click', ({ edge, e }) => {
+  selectedEdge = edge;
+  relationTypeSelect.value = edge.getData()?.relation || '=';
+  const panel = edgeControls;
+  const rect = container.getBoundingClientRect();
+  const x = Math.min(e.clientX, rect.right - panel.offsetWidth - 12);
+  const y = Math.min(e.clientY, rect.bottom - panel.offsetHeight - 12);
+  panel.style.left = `${x - rect.left}px`;
+  panel.style.top = `${y - rect.top}px`;
+  panel.style.display = 'block';
+});
+graph.on('blank:click node:click', () => {
+  edgeControls.style.display = 'none';
+  selectedEdge = null;
 });
 
-graph.on('edge:connected', ({ edge }) => addRemoveButton(edge));
+// --------------------------
+// Save / Cancel relation
+// --------------------------
+btnSaveRelation.addEventListener('click', () => {
+  if (!selectedEdge) return;
+  applyEdgeLabels(selectedEdge, relationTypeSelect.value);
+  addRemoveButton(selectedEdge);
+  edgeControls.style.display = 'none';
+  selectedEdge = null;
+});
+btnCancelRelation.addEventListener('click', () => {
+  edgeControls.style.display = 'none';
+  selectedEdge = null;
+});
 
-// ---------------------
-// EXPORT JSON
-// ---------------------
-function exportJSON() {
-  return {
-    tables: graph.getNodes().map((n) => ({
-      id: n.id,
-      name: n.data.name,
-      baseTable: n.data.baseTable || false,
-      position: n.position(),
-      fields: n.data.fields,
-    })),
+// --------------------------
+// Delete modal
+// --------------------------
+btnCancelDelete.addEventListener('click', () => {
+  deleteModal.classList.add('hidden');
+  edgeToDelete = null;
+});
+btnConfirmDelete.addEventListener('click', () => {
+  if (edgeToDelete) edgeToDelete.remove();
+  deleteModal.classList.add('hidden');
+  edgeToDelete = null;
+});
 
-    links: graph.getEdges().map((e) => {
-      const s = e.getSource();
-      const t = e.getTarget();
-      const parse = (obj) => {
-        const [table, , field] = obj.port.split('.');
-        return { table, field };
-      };
-
-      return { id: e.id, source: parse(s), target: parse(t) };
-    }),
-  };
-}
-
-document.getElementById('btnExport').onclick = () => {
-  const blob = new Blob([JSON.stringify(exportJSON(), null, 2)], {
-    type: 'application/json',
+// --------------------------
+// Export JSON
+// --------------------------
+document.getElementById('btnExport').addEventListener('click', () => {
+  const nodes = graph.getNodes().map((n) => ({
+    id: n.id,
+    name: n.data?.name,
+    baseTable: n.data?.baseTable || false,
+    position: n.position(),
+    fields: n.data?.fields || [],
+  }));
+  const edges = graph.getEdges().map((e) => {
+    const s = e.getSource();
+    const t = e.getTarget();
+    const d = e.getData() || {};
+    return { id: e.id, source: s.port, target: t.port, relation: d.relation };
   });
-
+  const json = JSON.stringify({ nodes, edges }, null, 2);
   const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
+  a.href = URL.createObjectURL(new Blob([json], { type: 'application/json' }));
   a.download = 'erd-export.json';
   a.click();
-};
+});
 
-document.getElementById('btnCenter').onclick = () => graph.centerContent();
+// --------------------------
+// Center
+// --------------------------
+document
+  .getElementById('btnCenter')
+  .addEventListener('click', () => graph.centerContent());
 
-document.getElementById('btnLoadDemo').onclick = () =>
+// --------------------------
+// Load demo JSON only on button click
+// --------------------------
+document.getElementById('btnLoadDemo').addEventListener('click', () => {
   fetch('http://localhost:8000/demoJSON/demo.json')
-    .then((r) => r.json())
-    .then((d) => {
-      currentGraphData = d;
-      loadFromJSON(d);
+    .then((res) => res.json())
+    .then((data) => {
+      graph.clearCells();
+      data.nodes.forEach(addTableNode);
+      data.links.forEach((l) => {
+        const parse = (p) => {
+          const parts = p.split('.');
+          return { cell: parts[0], port: p };
+        };
+        const e = graph.addEdge({
+          id: l.id,
+          source: parse(l.source),
+          target: parse(l.target),
+          attrs: {
+            line: {
+              stroke: '#A2B1C3',
+              strokeWidth: 2,
+              targetMarker: { name: 'classic', size: 8 },
+            },
+          },
+          data: { relation: l.relation },
+        });
+        applyEdgeLabels(e, l.relation);
+        addRemoveButton(e);
+      });
+      graph.centerContent();
     })
     .catch(() => console.warn('demo.json not found.'));
-
-//---###### FILEMAKER stuff ---#######
-//-------------------------------------------------------------------------------------
-// ---------------------
-// RECEIVE JSON FROM FILEMAKER
-// ---------------------
-window.receiveJSONFromFM = function (jsonString) {
-  try {
-    currentGraphData = JSON.parse(jsonString);
-    loadFromJSON(currentGraphData);
-  } catch (error) {
-    console.error('Invalid JSON from FileMaker:', error);
-    alert('Failed to load data from FileMaker. Invalid JSON format.');
-  }
-};
-
-// ---------------------
-// SEND JSON TO FILEMAKER
-// ---------------------
-window.sendToFileMaker = function (data) {
-  if (window.FileMaker && window.FileMaker.PerformScript) {
-    window.FileMaker.PerformScript('ReceiveERDData', JSON.stringify(data));
-  } else {
-    console.warn('Not running inside FileMaker WebViewer');
-  }
-};
-
-// ---------------------
-// UPDATE BASE TABLE
-// ---------------------
-window.updateBaseTable = function (newBaseTableId) {
-  try {
-    for (let table of currentGraphData.tables) {
-      if (table.id == newBaseTableId) {
-        table.baseTable = true;
-      } else {
-        table.baseTable = false;
-      }
-    }
-    loadFromJSON(currentGraphData);
-  } catch (error) {
-    console.error('Error updating base table:', error);
-    return false;
-  }
-};
-
-// ---------------------
-// SEND JSON TO FILEMAKER
-// ---------------------
-window.sendToFileMaker = function (data) {
-  if (window.FileMaker && window.FileMaker.PerformScript) {
-    window.FileMaker.PerformScript('ReceiveERDData', JSON.stringify(data));
-  } else {
-    console.warn('Not running inside FileMaker WebViewer');
-  }
-};
-
-// ---------------------
-// UPDATE BASE TABLE AND SEND TO FILEMAKER
-// ---------------------
-window.updateBaseTableAndSend = function (newBaseTableId) {
-  var success = window.updateBaseTable(newBaseTableId);
-  if (success && currentGraphData) {
-    // Send updated data back to FileMaker
-    window.sendToFileMaker(currentGraphData);
-    return true;
-  }
-  return false;
-};
+});

@@ -2,28 +2,68 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <title>ERD Editor — final</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>ERD Schema Editor</title>
+
     <!-- X6 CSS -->
     <link
       rel="stylesheet"
       href="https://cdn.jsdelivr.net/npm/@antv/x6/dist/x6.css" />
-    <!-- styles -->
+
+    <!-- App styles -->
     <link rel="stylesheet" href="style.css" />
   </head>
-
   <body>
     <div id="topbar">
-      <button id="btnLoadDemo">Load demo.json</button>
-      <button id="btnExport">Export JSON</button>
-      <button id="btnCenter">Center</button>
-      <span class="info"
-        >Right ports = OUT (start), Left ports = IN (target).</span
-      >
+      <div class="top-left">
+        <h1 class="title">ERD Schema Editor</h1>
+        <div class="controls">
+          <button id="btnLoadDemo" class="btn">Load Demo Schema</button>
+          <button id="btnExport" class="btn ghost">Export JSON</button>
+          <button id="btnCenter" class="btn ghost">Center View</button>
+        </div>
+      </div>
+      <div class="hint">
+        Right ports = OUT (source), Left ports = IN (target).
+      </div>
     </div>
+
+    <!-- floating relation editor -->
+    <div id="edge-controls" class="panel" style="display: none">
+      <label class="label">Operator / Label</label>
+      <select id="relation-type" class="select">
+        <option value="=">=</option>
+        <option value="<">&lt;</option>
+        <option value=">">&gt;</option>
+        <option value="<=">&le;</option>
+        <option value=">=">&ge;</option>
+      </select>
+      <div class="panel-actions">
+        <button id="btnSaveRelation" class="btn">Save</button>
+        <button id="btnCancelRelation" class="btn ghost">Cancel</button>
+      </div>
+    </div>
+
+    <!-- Delete modal -->
+    <div id="delete-modal" class="modal hidden">
+      <div class="modal-box">
+        <h3>Confirm Deletion</h3>
+        <p>
+          Are you sure you want to remove this relationship? This action cannot
+          be undone.
+        </p>
+        <div class="modal-actions">
+          <button id="btnCancelDelete" class="btn ghost">Cancel</button>
+          <button id="btnConfirmDelete" class="btn danger">Delete</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- canvas -->
     <div id="container"></div>
-    <!-- X6 -->
+
+    <!-- scripts -->
     <script src="https://cdn.jsdelivr.net/npm/@antv/x6/dist/x6.js"></script>
-    <!-- ERD logic js -->
     <script src="erd-graph.js"></script>
   </body>
 </html>

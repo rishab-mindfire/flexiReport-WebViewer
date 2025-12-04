@@ -1,133 +1,85 @@
 {
-  "tables": [
+  "nodes": [
     {
-      "id": "4E81159D-836D-634C-855E-C12F42137D00",
-      "name": "Vendor",
-      "baseTable": false,
-      "position": {
-        "x": 520,
-        "y": 250
-      },
-      "fields": [
-        {
-          "id": "2EFB6B52-A537-EB44-9501-091738FD1228",
-          "name": "VendorID_t"
-        },
-        {
-          "id": "40C3D535-B8E8-8B48-8E35-EFDE3EE52BD3",
-          "name": "VendorName_t"
-        },
-        {
-          "id": "E3F206E9-1388-2B4A-B956-26D123337613",
-          "name": "VendorEmail_t"
-        },
-        {
-          "id": "D8E1E177-99D4-3743-97C8-69ABF7B96B9C",
-          "name": "VendorCompanyAddresh_t"
-        }
-      ]
-    },
-    {
-      "id": "E4ADAF6E-3A8B-9E4A-BA6A-19CA67C4E0A2",
-      "name": "Order",
+      "id": "base",
+      "name": "Source_Report",
       "baseTable": true,
-      "position": {
-        "x": -80,
-        "y": 30
-      },
+      "position": { "x": 40, "y": 80 },
       "fields": [
-        {
-          "id": "9D462147-4E45-1F4B-B53D-099081D6D6AA",
-          "name": "OrderID_t"
-        },
-        {
-          "id": "F2BB6D1A-8DAC-3740-8152-DE88A8E56028",
-          "name": "CustomerName_t"
-        },
-        {
-          "id": "32D1571D-1DCB-9F4E-9DB8-E66B30F4A5B9",
-          "name": "TotalAmount_n"
-        },
-        {
-          "id": "97A5BC90-D955-E343-8183-1C4AFF5B22E3",
-          "name": "CustomerID_t"
-        },
-        {
-          "id": "4EA528FA-8D06-0644-AEA7-E56C19D8E7D6",
-          "name": "PaidAmount_n"
-        },
-        {
-          "id": "7972F288-BADB-144E-91BF-35A8744F7594",
-          "name": "DueAmount_n"
-        },
-        {
-          "id": "993A3C5E-3E0E-CD46-9D16-6F3200014701",
-          "name": "VendorID_t"
-        }
+        { "name": "order_id" },
+        { "name": "customer_id" },
+        { "name": "product_id" },
+        { "name": "order_id1" },
+        { "name": "customer_id2" },
+        { "name": "product_id3" },
+        { "name": "order_id2" },
+        { "name": "customer_id3" },
+        { "name": "product_id1" }
       ]
     },
     {
-      "id": "25DB383E-714F-3747-9859-50A1ACAA0D64",
-      "name": "Customer",
-      "baseTable": false,
-      "position": {
-        "x": 510,
-        "y": -40
-      },
+      "id": "orders",
+      "name": "Orders_Fact",
+      "position": { "x": 360, "y": 90 },
       "fields": [
-        {
-          "id": "0C3E9DD0-A3AC-3341-ACF9-D6A12C4D926E",
-          "name": "Customer_ID"
-        },
-        {
-          "id": "C9EFB347-7C7D-B944-BCB7-1DDA33111FCF",
-          "name": "CustomerName_t"
-        },
-        {
-          "id": "65EFD090-4FD4-E949-A765-7067DCA7155F",
-          "name": "CustomerEmail_t"
-        },
-        {
-          "id": "2C423BBF-EF57-FD46-8C88-C382C9C88911",
-          "name": "CustomerRating_n"
-        },
-        {
-          "id": "DAE2037A-DEF7-0144-A83D-220E120542B1",
-          "name": "CustomerNote_t"
-        },
-        {
-          "id": "6E507713-FB76-DD45-AE4C-91596EB9A38B",
-          "name": "CustomerAdd"
-        },
-        {
-          "id": "B4DEA40E-7DED-1B40-AC1E-C447C5B58F20",
-          "name": "CustomerMobile_t"
-        }
+        { "name": "order_id" },
+        { "name": "customer_id" },
+        { "name": "order_date" },
+        { "name": "product_id" },
+        { "name": "order_id1" },
+        { "name": "customer_id2" },
+        { "name": "product_id3" },
+        { "name": "order_id2" },
+        { "name": "customer_id3" },
+        { "name": "product_id1" }
+      ]
+    },
+    {
+      "id": "customers",
+      "name": "Dim_Customer",
+      "position": { "x": 760, "y": 120 },
+      "fields": [
+        { "name": "customer_id" },
+        { "name": "fullname" },
+        { "name": "segment" },
+        { "name": "product_id" },
+        { "name": "order_id1" },
+        { "name": "customer_id2" },
+        { "name": "product_id3" },
+        { "name": "order_id2" },
+        { "name": "customer_id3" },
+        { "name": "product_id1" }
+      ]
+    },
+    {
+      "id": "products",
+      "name": "Dim_Product",
+      "position": { "x": 760, "y": 420 },
+      "fields": [
+        { "name": "product_id" },
+        { "name": "sku" },
+        { "name": "category" }
       ]
     }
   ],
   "links": [
     {
-      "id": "4792da87-ff3d-4e84-8a39-3c04bfc3330e",
-      "source": {
-        "table": "E4ADAF6E-3A8B-9E4A-BA6A-19CA67C4E0A2",
-        "field": "97A5BC90-D955-E343-8183-1C4AFF5B22E3"
-      },
-      "target": {
-        "table": "25DB383E-714F-3747-9859-50A1ACAA0D64",
-        "field": "0C3E9DD0-A3AC-3341-ACF9-D6A12C4D926E"
-      }
+      "id": "l1",
+      "source": "base.R.order_id",
+      "target": "orders.L.order_id",
+      "relation": "="
     },
     {
-      "id": "38836173-c641-4519-9588-661b4ddaf293",
-      "source": {
-        "table": "E4ADAF6E-3A8B-9E4A-BA6A-19CA67C4E0A2",
-        "field": "993A3C5E-3E0E-CD46-9D16-6F3200014701"
-      },
-      "target": {
-        "table": "4E81159D-836D-634C-855E-C12F42137D00",
-        "field": "2EFB6B52-A537-EB44-9501-091738FD1228"
-      }
+      "id": "l2",
+      "source": "base.R.customer_id",
+      "target": "customers.L.customer_id",
+      "relation": "="
+    },
+    {
+      "id": "l3",
+      "source": "base.R.product_id",
+      "target": "products.L.product_id",
+      "relation": "<"
     }
   ]
 }
