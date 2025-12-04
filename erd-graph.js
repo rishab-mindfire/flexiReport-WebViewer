@@ -265,24 +265,6 @@ document.getElementById('btnExport').onclick = () => {
   a.href = URL.createObjectURL(blob);
   a.download = 'erd-export.json';
   a.click();
-
-  // ======= use the below code when sending data to FileMaker =======
-  // const exportData = exportJSON();
-  // if (window.FileMaker && window.FileMaker.PerformScript) {
-  //   // Send to FileMaker
-  //   window.FileMaker.PerformScript("ReceiveERDData", JSON.stringify(exportData));
-  // } else {
-
-  //   // Fallback: download as file
-  //   const blob = new Blob([JSON.stringify(exportData, null, 2)], {
-  //     type: "application/json",
-  //   });
-
-  //   const a = document.createElement("a");
-  //   a.href = URL.createObjectURL(blob);
-  //   a.download = "erd-export.json";
-  //   a.click();
-  // }
 };
 
 document.getElementById('btnCenter').onclick = () => graph.centerContent();
@@ -296,6 +278,8 @@ document.getElementById('btnLoadDemo').onclick = () =>
     })
     .catch(() => console.warn('demo.json not found.'));
 
+//---###### FILEMAKER stuff ---#######
+//-------------------------------------------------------------------------------------
 // ---------------------
 // RECEIVE JSON FROM FILEMAKER
 // ---------------------
