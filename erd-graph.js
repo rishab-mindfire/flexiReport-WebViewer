@@ -1,6 +1,8 @@
 const { Graph } = window.X6;
 
+// --------------------------
 // DOM refs
+// --------------------------
 const container = document.getElementById('container');
 const edgeControls = document.getElementById('edge-controls');
 const relationTypeSelect = document.getElementById('relation-type');
@@ -46,7 +48,7 @@ const graph = new Graph({
         },
         data: { relation: '=' },
       });
-      applyEdgeLabels(e, '=');
+      updateEdgeLabelAndStyle(e, '=');
       return e;
     },
     validateConnection({ sourcePort, targetPort }) {
@@ -68,12 +70,10 @@ function buildTableHtml(table) {
         `<div class="er-field" data-name="${f.id || f.name}">${f.name}</div>`
     )
     .join('');
-  return `
-    <div class="er-table ${table.baseTable ? 'base-table' : ''}">
-      <div class="er-header">${table.name}</div>
-      <div class="er-fields-container">${fieldsHtml}</div>
-    </div>
-  `;
+  return `<div class="er-table ${table.baseTable ? 'base-table' : ''}">
+    <div class="er-header">${table.name}</div>
+    <div class="er-fields-container">${fieldsHtml}</div>
+  </div>`;
 }
 
 // --------------------------
@@ -102,10 +102,9 @@ function makePortsForTable(n) {
 // Add node
 // --------------------------
 function addTableNode(n) {
-  const headerHeight = 42;
-  const rowHeight = 36;
-  const totalH = headerHeight + (n.fields?.length || 1) * rowHeight + 10;
-
+  const headerHeight = 42,
+    rowHeight = 36,
+    totalH = headerHeight + (n.fields?.length || 1) * rowHeight + 10;
   graph.addNode({
     id: n.id,
     shape: 'html',
@@ -141,29 +140,49 @@ function addTableNode(n) {
 }
 
 // --------------------------
-// Edge labels (relationship type)
+// Edge label + arrow style updater
 // --------------------------
-function applyEdgeLabels(edge, relationText) {
+function updateEdgeLabelAndStyle(edge, relation) {
+  // Set label
   edge.setLabels([
     {
       position: 0.5,
       attrs: {
-        text: {
-          text: relationText || '',
-          fill: '#0f172a',
-
-          fontWeight: '700',
-        },
-        rect: {
-          fill: '#f8fafc',
-          stroke: '#cbd5e1',
-          rx: 6,
-          ry: 6,
-        },
+        text: { text: relation || '', fill: '#0f172a', fontWeight: '700' },
+        rect: { fill: '#f8fafc', stroke: '#cbd5e1', rx: 6, ry: 6 },
       },
     },
   ]);
-  edge.setData({ relation: relationText });
+  // Save relation in data
+  edge.setData({ ...edge.getData(), relation });
+
+  // Set arrow style
+  switch (relation) {
+    case '=':
+      edge.attr('line/targetMarker', { name: 'classic', size: 8 });
+      edge.attr('line/stroke', '#A2B1C3');
+      break;
+    case '1:N':
+      edge.attr('line/targetMarker', { name: 'block', size: 12 });
+      edge.attr('line/stroke', '#0e7490');
+      break;
+    case 'N:1':
+      edge.attr('line/targetMarker', {
+        name: 'classic',
+        size: 12,
+        fill: '#0e7490',
+      });
+      edge.attr('line/stroke', '#0e7490');
+      break;
+    case 'N:N':
+      edge.attr('line/targetMarker', {
+        name: 'classic',
+        size: 8,
+        fill: '#ef4444',
+      });
+      edge.attr('line/stroke', '#ef4444');
+      break;
+  }
 }
 
 // --------------------------
@@ -194,7 +213,7 @@ function addRemoveButton(edge) {
             },
           },
         ],
-        distance: 0.6, // slightly further from label
+        distance: 0.6,
         offset: { x: 40, y: 0 },
         onClick: () => {
           edgeToDelete = edge;
@@ -209,20 +228,51 @@ function addRemoveButton(edge) {
 // Edge events
 // --------------------------
 graph.on('edge:connected', ({ edge }) => {
-  applyEdgeLabels(edge, edge.getData()?.relation || '=');
+  updateEdgeLabelAndStyle(edge, edge.getData()?.relation || '=');
   addRemoveButton(edge);
 });
 graph.on('edge:click', ({ edge, e }) => {
   selectedEdge = edge;
   relationTypeSelect.value = edge.getData()?.relation || '=';
-  const panel = edgeControls;
+
+  const sourceNode = edge.getSourceNode();
+  const targetNode = edge.getTargetNode();
+
+  // Populate left (target) fields
+  const leftSelect = document.getElementById('edge-left-field');
+  leftSelect.innerHTML = '';
+  targetNode?.data?.fields?.forEach((f) => {
+    const opt = document.createElement('option');
+    opt.value = f.id || f.name;
+    opt.textContent = f.name;
+    leftSelect.appendChild(opt);
+  });
+  const targetPort = edge.getTarget()?.port;
+  if (targetPort) leftSelect.value = targetPort.split('.').slice(2).join('.');
+
+  // Populate right (source) fields
+  const rightSelect = document.getElementById('edge-right-field');
+  rightSelect.innerHTML = '';
+  sourceNode?.data?.fields?.forEach((f) => {
+    const opt = document.createElement('option');
+    opt.value = f.id || f.name;
+    opt.textContent = f.name;
+    rightSelect.appendChild(opt);
+  });
+  const sourcePort = edge.getSource()?.port;
+  if (sourcePort) rightSelect.value = sourcePort.split('.').slice(2).join('.');
+
+  // Position panel
   const rect = container.getBoundingClientRect();
-  const x = Math.min(e.clientX, rect.right - panel.offsetWidth - 12);
-  const y = Math.min(e.clientY, rect.bottom - panel.offsetHeight - 12);
-  panel.style.left = `${x - rect.left}px`;
-  panel.style.top = `${y - rect.top}px`;
-  panel.style.display = 'block';
+  edgeControls.style.left = `${
+    Math.min(e.clientX, rect.right - edgeControls.offsetWidth - 12) - rect.left
+  }px`;
+  edgeControls.style.top = `${
+    Math.min(e.clientY, rect.bottom - edgeControls.offsetHeight - 12) - rect.top
+  }px`;
+  edgeControls.style.display = 'block';
 });
+
 graph.on('blank:click node:click', () => {
   edgeControls.style.display = 'none';
   selectedEdge = null;
@@ -233,11 +283,45 @@ graph.on('blank:click node:click', () => {
 // --------------------------
 btnSaveRelation.addEventListener('click', () => {
   if (!selectedEdge) return;
-  applyEdgeLabels(selectedEdge, relationTypeSelect.value);
+
+  const relation = relationTypeSelect.value;
+
+  // 1️⃣ Update edge label and arrow
+  updateEdgeLabelAndStyle(selectedEdge, relation);
+
+  // 2️⃣ Update source & target ports if needed
+  const leftField = document.getElementById('edge-left-field').value;
+  const rightField = document.getElementById('edge-right-field').value;
+
+  const sourcePortId = selectedEdge.getSource()?.port?.split('.') || [];
+  const targetPortId = selectedEdge.getTarget()?.port?.split('.') || [];
+
+  // Rebuild port ids
+  if (sourcePortId.length >= 3) {
+    selectedEdge.setSource({
+      cell: sourcePortId[0],
+      port: `${sourcePortId[0]}.R.${rightField}`,
+    });
+  }
+  if (targetPortId.length >= 3) {
+    selectedEdge.setTarget({
+      cell: targetPortId[0],
+      port: `${targetPortId[0]}.L.${leftField}`,
+    });
+  }
+
+  // 3️⃣ Re-add remove button (tools)
   addRemoveButton(selectedEdge);
+
+  // 4️⃣ Refresh edge to reflect changes immediately
+  selectedEdge.invalidate(); // ensures the edge redraws
+  graph.paint(); // optional: forces the graph to redraw
+
+  // Hide panel and reset selection
   edgeControls.style.display = 'none';
   selectedEdge = null;
 });
+
 btnCancelRelation.addEventListener('click', () => {
   edgeControls.style.display = 'none';
   selectedEdge = null;
@@ -247,13 +331,13 @@ btnCancelRelation.addEventListener('click', () => {
 // Delete modal
 // --------------------------
 btnCancelDelete.addEventListener('click', () => {
-  deleteModal.classList.add('hidden');
   edgeToDelete = null;
+  deleteModal.classList.add('hidden');
 });
 btnConfirmDelete.addEventListener('click', () => {
   if (edgeToDelete) edgeToDelete.remove();
-  deleteModal.classList.add('hidden');
   edgeToDelete = null;
+  deleteModal.classList.add('hidden');
 });
 
 // --------------------------
@@ -268,9 +352,9 @@ document.getElementById('btnExport').addEventListener('click', () => {
     fields: n.data?.fields || [],
   }));
   const edges = graph.getEdges().map((e) => {
-    const s = e.getSource();
-    const t = e.getTarget();
-    const d = e.getData() || {};
+    const s = e.getSource(),
+      t = e.getTarget(),
+      d = e.getData() || {};
     return { id: e.id, source: s.port, target: t.port, relation: d.relation };
   });
   const json = JSON.stringify({ nodes, edges }, null, 2);
@@ -281,26 +365,23 @@ document.getElementById('btnExport').addEventListener('click', () => {
 });
 
 // --------------------------
-// Center
+// Center graph
 // --------------------------
 document
   .getElementById('btnCenter')
   .addEventListener('click', () => graph.centerContent());
 
 // --------------------------
-// Load demo JSON only on button click
+// Load JSON
 // --------------------------
 document.getElementById('btnLoadDemo').addEventListener('click', () => {
   fetch('http://localhost:8000/demoJSON/demo.json')
     .then((res) => res.json())
     .then((data) => {
       graph.clearCells();
-      data.nodes.forEach(addTableNode);
-      data.links.forEach((l) => {
-        const parse = (p) => {
-          const parts = p.split('.');
-          return { cell: parts[0], port: p };
-        };
+      (data.nodes || []).forEach(addTableNode);
+      (data.edges || []).forEach((l) => {
+        const parse = (p) => ({ cell: p.split('.')[0], port: p });
         const e = graph.addEdge({
           id: l.id,
           source: parse(l.source),
@@ -314,10 +395,10 @@ document.getElementById('btnLoadDemo').addEventListener('click', () => {
           },
           data: { relation: l.relation },
         });
-        applyEdgeLabels(e, l.relation);
+        updateEdgeLabelAndStyle(e, l.relation);
         addRemoveButton(e);
       });
       graph.centerContent();
     })
-    .catch(() => console.warn('demo.json not found.'));
+    .catch((err) => console.error('Failed to load demo JSON:', err));
 });

@@ -10,9 +10,10 @@
       rel="stylesheet"
       href="https://cdn.jsdelivr.net/npm/@antv/x6/dist/x6.css" />
 
-    <!-- App styles -->
+    <!-- App CSS -->
     <link rel="stylesheet" href="style.css" />
   </head>
+
   <body>
     <div id="topbar">
       <div class="top-left">
@@ -23,46 +24,55 @@
           <button id="btnCenter" class="btn ghost">Center View</button>
         </div>
       </div>
+
       <div class="hint">
         Right ports = OUT (source), Left ports = IN (target).
       </div>
     </div>
 
-    <!-- floating relation editor -->
-    <div id="edge-controls" class="panel" style="display: none">
-      <label class="label">Operator / Label</label>
-      <select id="relation-type" class="select">
-        <option value="=">=</option>
-        <option value="<">&lt;</option>
-        <option value=">">&gt;</option>
-        <option value="<=">&le;</option>
-        <option value=">=">&ge;</option>
-      </select>
-      <div class="panel-actions">
-        <button id="btnSaveRelation" class="btn">Save</button>
-        <button id="btnCancelRelation" class="btn ghost">Cancel</button>
+    <!-- Relationship Editor -->
+    <div id="edge-controls" class="floating-box hidden">
+      <div>
+        <label>Left Table Field:</label>
+        <select id="edge-left-field"></select>
+      </div>
+
+      <div>
+        <label>Right Table Field:</label>
+        <select id="edge-right-field"></select>
+      </div>
+
+      <div>
+        <label>Relation Type:</label>
+        <select id="relation-type">
+          <option value="=">=</option>
+          <option value="1:N">1:N</option>
+          <option value="N:1">N:1</option>
+          <option value="N:N">N:N</option>
+        </select>
+      </div>
+
+      <div class="edit-actions">
+        <button id="btnSaveRelation" class="btn small">Save</button>
+        <button id="btnCancelRelation" class="btn ghost small">Cancel</button>
       </div>
     </div>
 
-    <!-- Delete modal -->
+    <!-- Delete Modal -->
     <div id="delete-modal" class="modal hidden">
-      <div class="modal-box">
-        <h3>Confirm Deletion</h3>
-        <p>
-          Are you sure you want to remove this relationship? This action cannot
-          be undone.
-        </p>
+      <div class="modal-content">
+        <h3>Delete Relationship?</h3>
+        <p>This action cannot be undone.</p>
         <div class="modal-actions">
-          <button id="btnCancelDelete" class="btn ghost">Cancel</button>
           <button id="btnConfirmDelete" class="btn danger">Delete</button>
+          <button id="btnCancelDelete" class="btn ghost">Cancel</button>
         </div>
       </div>
     </div>
 
-    <!-- canvas -->
     <div id="container"></div>
 
-    <!-- scripts -->
+    <!-- X6 JS -->
     <script src="https://cdn.jsdelivr.net/npm/@antv/x6/dist/x6.js"></script>
     <script src="erd-graph.js"></script>
   </body>

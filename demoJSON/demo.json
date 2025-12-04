@@ -4,82 +4,101 @@
       "id": "base",
       "name": "Source_Report",
       "baseTable": true,
-      "position": { "x": 40, "y": 80 },
+      "position": {
+        "x": 20,
+        "y": 250
+      },
       "fields": [
-        { "name": "order_id" },
-        { "name": "customer_id" },
-        { "name": "product_id" },
-        { "name": "order_id1" },
-        { "name": "customer_id2" },
-        { "name": "product_id3" },
-        { "name": "order_id2" },
-        { "name": "customer_id3" },
-        { "name": "product_id1" }
+        {
+          "name": "order_id"
+        },
+        {
+          "name": "customer_id"
+        },
+        {
+          "name": "product_id"
+        }
       ]
     },
     {
       "id": "orders",
       "name": "Orders_Fact",
-      "position": { "x": 360, "y": 90 },
+      "baseTable": false,
+      "position": {
+        "x": 360,
+        "y": 90
+      },
       "fields": [
-        { "name": "order_id" },
-        { "name": "customer_id" },
-        { "name": "order_date" },
-        { "name": "product_id" },
-        { "name": "order_id1" },
-        { "name": "customer_id2" },
-        { "name": "product_id3" },
-        { "name": "order_id2" },
-        { "name": "customer_id3" },
-        { "name": "product_id1" }
+        {
+          "name": "order_id"
+        },
+        {
+          "name": "customer_id"
+        },
+        {
+          "name": "order_date"
+        }
       ]
     },
     {
       "id": "customers",
       "name": "Dim_Customer",
-      "position": { "x": 760, "y": 120 },
+      "baseTable": false,
+      "position": {
+        "x": 760,
+        "y": 120
+      },
       "fields": [
-        { "name": "customer_id" },
-        { "name": "fullname" },
-        { "name": "segment" },
-        { "name": "product_id" },
-        { "name": "order_id1" },
-        { "name": "customer_id2" },
-        { "name": "product_id3" },
-        { "name": "order_id2" },
-        { "name": "customer_id3" },
-        { "name": "product_id1" }
+        {
+          "name": "customer_id"
+        },
+        {
+          "name": "fullname"
+        },
+        {
+          "name": "segment"
+        }
       ]
     },
     {
       "id": "products",
       "name": "Dim_Product",
-      "position": { "x": 760, "y": 420 },
+      "baseTable": false,
+      "position": {
+        "x": 760,
+        "y": 420
+      },
       "fields": [
-        { "name": "product_id" },
-        { "name": "sku" },
-        { "name": "category" }
+        {
+          "name": "product_id"
+        },
+        {
+          "name": "sku"
+        },
+        {
+          "name": "category"
+        }
       ]
     }
   ],
-  "links": [
+  "edges": [
     {
-      "id": "l1",
+      "id": "9feb21e8-469b-4a1e-bcb8-ba2b15755fd2",
       "source": "base.R.order_id",
-      "target": "orders.L.order_id",
+      "target": "orders.L.customer_id",
       "relation": "="
     },
     {
-      "id": "l2",
-      "source": "base.R.customer_id",
+      "id": "e2ae8957-b425-4c55-b673-37f2be712263",
+      "source": "base.R.order_id",
       "target": "customers.L.customer_id",
-      "relation": "="
+      "relation": "N:N"
     },
     {
-      "id": "l3",
+      "id": "f6ee064f-157d-4f2a-8baf-efb83ed3a79e",
       "source": "base.R.product_id",
-      "target": "products.L.product_id",
-      "relation": "<"
+      "target": "products.L.sku",
+      "relation": "="
     }
   ]
 }
