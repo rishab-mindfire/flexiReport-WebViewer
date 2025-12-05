@@ -1,7 +1,13 @@
 {
-  "links": [],
   "tables": [
     {
+      "id": "4E81159D-836D-634C-855E-C12F42137D00",
+      "name": "Vendor",
+      "baseTable": false,
+      "position": {
+        "x": 100,
+        "y": 210
+      },
       "fields": [
         {
           "id": "2EFB6B52-A537-EB44-9501-091738FD1228",
@@ -18,13 +24,54 @@
         {
           "id": "D8E1E177-99D4-3743-97C8-69ABF7B96B9C",
           "name": "VendorCompanyAddresh_t"
+        },
+        {
+          "id": "40C3D535-B8E8-8Be48-8E35-EFDE3EE52BD3",
+          "name": "VendorName_t1"
+        },
+        {
+          "id": "40C3D535-B8wE8-8B48-8E35-EFDE3EE52BD3",
+          "name": "VendorName_t2"
+        },
+        {
+          "id": "430C3D535-B8E8-8B48-8E35-EFDE3EE52BD3",
+          "name": "VendorName_t3"
+        },
+        {
+          "id": "40C3D5f35-B8wE8-8B48-8Ea35-EFDE3EE52BD3",
+          "name": "VendorName_t4"
+        },
+        {
+          "id": "430C3D535-Ba8E8-8B48-8E35-EFDaE3EE52BD3",
+          "name": "VendorName_t5"
+        },
+        {
+          "id": "40C3D535-B8wE8-8B48-8E35-EFDE3EytE52BD3",
+          "name": "VendorName_t6"
+        },
+        {
+          "id": "430C3D535-B8E8-8B48-8E35-EFDEqw3EE52BD3",
+          "name": "VendorName_t7"
         }
-      ],
-      "id": "4E81159D-836D-634C-855E-C12F42137D00",
-      "name": "Vendor"
+      ]
     },
     {
+      "id": "E4ADAF6E-3A8B-9E4A-BA6A-19CA67C4E0A2",
+      "name": "Order",
+      "baseTable": true,
+      "position": {
+        "x": -280,
+        "y": 60
+      },
       "fields": [
+        {
+          "id": "993A3C5E-3E0E-CD46-9D16-6F3200014701",
+          "name": "VendorID_t"
+        },
+        {
+          "id": "97A5BC90-D955-E343-8183-1C4AFF5B22E3",
+          "name": "CustomerID_t"
+        },
         {
           "id": "9D462147-4E45-1F4B-B53D-099081D6D6AA",
           "name": "OrderID_t"
@@ -38,10 +85,6 @@
           "name": "TotalAmount_n"
         },
         {
-          "id": "97A5BC90-D955-E343-8183-1C4AFF5B22E3",
-          "name": "CustomerID_t"
-        },
-        {
           "id": "4EA528FA-8D06-0644-AEA7-E56C19D8E7D6",
           "name": "PaidAmount_n"
         },
@@ -50,14 +93,43 @@
           "name": "DueAmount_n"
         },
         {
-          "id": "993A3C5E-3E0E-CD46-9D16-6F3200014701",
-          "name": "VendorID_t"
+          "id": "993A3Cr5E-3E0E-CD46-9D16-6F3200014701",
+          "name": "Order_t1"
+        },
+        {
+          "id": "993A3Cr5E-3E0E-CD46-9D416-6F3200014701",
+          "name": "Order_t2"
+        },
+        {
+          "id": "993A3Cr5E-3E0E-CD46-9D16-6F32006014701",
+          "name": "Order_t3"
+        },
+        {
+          "id": "993A23Cr5E-3E0E-CD46-9D416-6F3200014701",
+          "name": "Order_t4"
+        },
+        {
+          "id": "993A3Cr5E-3E0E-CD46-9Dt416-6F3200014701",
+          "name": "Order_t5"
+        },
+        {
+          "id": "993A3Cr5E-3E0E-Css46-9D416-6F3200014701",
+          "name": "Order_t6"
+        },
+        {
+          "id": "993A3Cr5E-3E0E-CD46-29D416-6F3200014701",
+          "name": "Order_t7"
         }
-      ],
-      "id": "E4ADAF6E-3A8B-9E4A-BA6A-19CA67C4E0A2",
-      "name": "Order"
+      ]
     },
     {
+      "id": "25DB383E-714F-3747-9859-50A1ACAA0D64",
+      "name": "Customer",
+      "baseTable": false,
+      "position": {
+        "x": 90,
+        "y": 0
+      },
       "fields": [
         {
           "id": "0C3E9DD0-A3AC-3341-ACF9-D6A12C4D926E",
@@ -87,9 +159,21 @@
           "id": "B4DEA40E-7DED-1B40-AC1E-C447C5B58F20",
           "name": "CustomerMobile_t"
         }
-      ],
-      "id": "25DB383E-714F-3747-9859-50A1ACAA0D64",
-      "name": "Customer"
+      ]
+    }
+  ],
+  "links": [
+    {
+      "id": "8bafa4df-744b-4202-8653-ab930f139546",
+      "source": "Order.R.VendorID_t",
+      "target": "Vendor.L.VendorID_t",
+      "relation": "="
+    },
+    {
+      "id": "7ab5ba5f-ccce-4c27-9b64-88947c07caf1",
+      "source": "Order.R.CustomerID_t",
+      "target": "Customer.L.Customer_ID",
+      "relation": "="
     }
   ]
 }

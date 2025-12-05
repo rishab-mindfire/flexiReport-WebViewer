@@ -5,14 +5,10 @@
       "name": "Vendor",
       "baseTable": false,
       "position": {
-        "x": 100,
-        "y": 210
+        "x": 90,
+        "y": 240
       },
       "fields": [
-        {
-          "id": "2EFB6B52-A537-EB44-9501-091738FD1228",
-          "name": "VendorID_t"
-        },
         {
           "id": "40C3D535-B8E8-8B48-8E35-EFDE3EE52BD3",
           "name": "VendorName_t"
@@ -24,6 +20,10 @@
         {
           "id": "D8E1E177-99D4-3743-97C8-69ABF7B96B9C",
           "name": "VendorCompanyAddresh_t"
+        },
+        {
+          "id": "E3F206E9-1388-2B4A-t956-26D123337613",
+          "name": "VendorID_t"
         }
       ]
     },
@@ -71,13 +71,17 @@
       "name": "Customer",
       "baseTable": false,
       "position": {
-        "x": 90,
-        "y": 0
+        "x": 260,
+        "y": -40
       },
       "fields": [
         {
           "id": "0C3E9DD0-A3AC-3341-ACF9-D6A12C4D926E",
           "name": "Customer_ID"
+        },
+        {
+          "id": "6E507713-FB76-DD45-AE4C-91596EB9A38B",
+          "name": "CustomerAdd"
         },
         {
           "id": "C9EFB347-7C7D-B944-BCB7-1DDA33111FCF",
@@ -96,10 +100,6 @@
           "name": "CustomerNote_t"
         },
         {
-          "id": "6E507713-FB76-DD45-AE4C-91596EB9A38B",
-          "name": "CustomerAdd"
-        },
-        {
           "id": "B4DEA40E-7DED-1B40-AC1E-C447C5B58F20",
           "name": "CustomerMobile_t"
         }
@@ -108,16 +108,14 @@
   ],
   "links": [
     {
-      "id": "8bafa4df-744b-4202-8653-ab930f139546",
-      "source": "Order.R.VendorID_t",
-      "target": "Vendor.L.VendorID_t",
-      "relation": "="
-    },
-    {
-      "id": "7ab5ba5f-ccce-4c27-9b64-88947c07caf1",
-      "source": "Order.R.CustomerID_t",
-      "target": "Customer.L.Customer_ID",
-      "relation": "="
+      "id": "b9873ad0-81a2-437a-ad2f-4a4c5edb1866",
+      "source": "E4ADAF6E-3A8B-9E4A-BA6A-19CA67C4E0A2.R.9D462147-4E45-1F4B-B53D-099081D6D6AA",
+      "target": "25DB383E-714F-3747-9859-50A1ACAA0D64.L.0C3E9DD0-A3AC-3341-ACF9-D6A12C4D926E",
+      "relation": "=",
+      "sourceTableName": "Order",
+      "sourceFieldName": "OrderID_t",
+      "targetTableName": "Customer",
+      "targetFieldName": "Customer_ID"
     }
   ]
 }
