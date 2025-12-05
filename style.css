@@ -3,7 +3,6 @@ body {
   background: #f4f6f8;
   font-family: Arial, sans-serif;
 }
-
 #topbar {
   background: #fff;
   padding: 10px 15px;
@@ -53,7 +52,7 @@ body {
   padding: 4px 10px;
   font-size: 12px;
 }
-
+/*-----container----*/
 #container {
   width: 100%;
   height: calc(100vh - 60px);
@@ -77,6 +76,17 @@ body {
   margin-top: 10px;
   display: flex;
   justify-content: space-between;
+}
+/*--------- base table css ------- */
+.base-table {
+  background: #fff8e1 !important;
+  border: 2px solid #ffc107;
+  box-shadow: 0 6px 18px rgba(255, 193, 7, 0.3);
+}
+
+.base-table .er-header {
+  background: linear-gradient(90deg, #ffc107, #ff9800);
+  color: #000000;
 }
 
 /* Modal Styles */
@@ -130,9 +140,10 @@ body {
   padding: 8px;
 }
 tspan {
-  font-size: 18px;
+  font-size: 22px;
+  line-height: 30px;
 }
 .er-field {
-  padding: 6px;
+  padding: 1px;
   border-bottom: 1px solid #eee;
 }
