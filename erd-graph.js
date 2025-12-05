@@ -170,12 +170,139 @@ function addRemoveButton(edge) {
 }
 
 // ----------------------------------
+// NEW: Add or update link in currentGraphData from an X6 edge
+// ----------------------------------
+function addOrUpdateLinkFromEdge(edge) {
+  const src = edge.getSource();
+  const tgt = edge.getTarget();
+  const srcNode = edge.getSourceNode();
+  const tgtNode = edge.getTargetNode();
+  if (!srcNode || !tgtNode) return;
+
+  const srcFieldId = String(src.port || '')
+    .split('.')
+    .pop();
+  const tgtFieldId = String(tgt.port || '')
+    .split('.')
+    .pop();
+
+  const newLink = {
+    id: edge.id,
+    // keep tableId.R.fieldId format (R/L used by your code)
+    source: `${srcNode.id}.R.${srcFieldId}`,
+    target: `${tgtNode.id}.L.${tgtFieldId}`,
+    relation: edge.getData()?.relation || '=',
+    sourceTableName: srcNode.data?.name,
+    sourceFieldName:
+      srcNode.data?.fields.find((f) => f.id === srcFieldId)?.name || srcFieldId,
+    targetTableName: tgtNode.data?.name,
+    targetFieldName:
+      tgtNode.data?.fields.find((f) => f.id === tgtFieldId)?.name || tgtFieldId,
+  };
+
+  // ensure currentGraphData has links array
+  currentGraphData.links = currentGraphData.links || [];
+
+  const existsIndex = currentGraphData.links.findIndex(
+    (l) =>
+      l.id === newLink.id ||
+      (l.source === newLink.source && l.target === newLink.target)
+  );
+
+  if (existsIndex === -1) {
+    currentGraphData.links.push(newLink);
+  } else {
+    // update existing
+    currentGraphData.links[existsIndex] = {
+      ...currentGraphData.links[existsIndex],
+      ...newLink,
+    };
+  }
+}
+
+// ----------------------------------
+// GLOBAL: Sort tables by relation count (most-connected first) and move connected fields top
+// ----------------------------------
+function applyGlobalRelationCountSort() {
+  // deep clone to avoid accidental mutation during calculations
+  const updated = JSON.parse(
+    JSON.stringify(currentGraphData || { tables: [], links: [] })
+  );
+
+  const relationCount = {}; // tableId -> number
+
+  // Normalize links array
+  updated.links = updated.links || [];
+
+  updated.links.forEach((l) => {
+    // Expect source/target format tableId.<R/L>.fieldId or tableId.R.fieldId
+    const sParts = String(l.source).split('.');
+    const tParts = String(l.target).split('.');
+    const srcTableId = sParts[0];
+    const tgtTableId = tParts[0];
+
+    relationCount[srcTableId] = (relationCount[srcTableId] || 0) + 1;
+    relationCount[tgtTableId] = (relationCount[tgtTableId] || 0) + 1;
+  });
+
+  // Ensure every table has a count
+  (updated.tables || []).forEach((t) => {
+    relationCount[t.id] = relationCount[t.id] || 0;
+  });
+
+  // Within each table: move fields that participate in any link (by id) to top (preserve relative order)
+  const tableToLinkedFieldIds = {};
+  updated.links.forEach((l) => {
+    const [sTable, , sField] = String(l.source).split('.');
+    const [tTable, , tField] = String(l.target).split('.');
+    if (!tableToLinkedFieldIds[sTable])
+      tableToLinkedFieldIds[sTable] = new Set();
+    if (!tableToLinkedFieldIds[tTable])
+      tableToLinkedFieldIds[tTable] = new Set();
+    if (sField) tableToLinkedFieldIds[sTable].add(sField);
+    if (tField) tableToLinkedFieldIds[tTable].add(tField);
+  });
+
+  updated.tables = (updated.tables || []).map((table) => {
+    const linked = Array.from(tableToLinkedFieldIds[table.id] || new Set());
+    if (!table.fields || table.fields.length === 0) return table;
+
+    // preserve original order among linked and unlinked groups
+    const linkedFields = [];
+    const otherFields = [];
+
+    (table.fields || []).forEach((f) => {
+      const fid = f.id || f.name;
+      if (linked.includes(fid)) linkedFields.push(f);
+      else otherFields.push(f);
+    });
+
+    return { ...table, fields: [...linkedFields, ...otherFields] };
+  });
+
+  // Sort tables by relationCount desc (most-connected first), stable for equal counts
+  updated.tables.sort((a, b) => {
+    const ca = relationCount[a.id] || 0;
+    const cb = relationCount[b.id] || 0;
+    return cb - ca;
+  });
+
+  // Save back to global and reload graph
+  currentGraphData = updated;
+  loadGraphData(updated);
+}
+
+// ----------------------------------
 // Edge Events
 // ----------------------------------
 graph.on('edge:connected', ({ edge }) => {
+  // Set default relation label and tools
   updateEdgeLabelAndStyle(edge, edge.getData()?.relation || '=');
   addRemoveButton(edge);
-  sortingOrderOfFields(edge);
+
+  // Add/update link in currentGraphData and call global sort + reload
+  addOrUpdateLinkFromEdge(edge);
+  applyGlobalRelationCountSort();
 });
 
 graph.on('edge:click', ({ edge }) => {
@@ -184,6 +311,7 @@ graph.on('edge:click', ({ edge }) => {
   const srcNode = edge.getSourceNode();
   const tgtNode = edge.getTargetNode();
 
+  // populate selects with field ids
   leftFieldSelect.innerHTML = (tgtNode.data.fields || [])
     .map((f) => `<option value="${f.id}">${f.name}</option>`)
     .join('');
@@ -193,6 +321,7 @@ graph.on('edge:click', ({ edge }) => {
   leftFieldSelect.value = edge.getTarget().port.split('.').pop();
   rightFieldSelect.value = edge.getSource().port.split('.').pop();
 
+  // position edgeControls roughly centered
   const rect = container.getBoundingClientRect();
   edgeControls.style.left =
     rect.left + (rect.width - edgeControls.offsetWidth) / 2 + 'px';
@@ -206,45 +335,40 @@ graph.on('blank:click node:click', () => {
 });
 
 // ----------------------------------
-// Sorting Fields + Links
+// Remove old sorting-only helpers (kept for compatibility but no longer used elsewhere)
 // ----------------------------------
 function sortingOrderOfFields(edge) {
-  const updatedData = JSON.parse(JSON.stringify(currentGraphData));
+  // kept for backward compatibility — but we no longer recommend using this directly
+  // better to use addOrUpdateLinkFromEdge(edge) + applyGlobalRelationCountSort()
+  addOrUpdateLinkFromEdge(edge);
+  applyGlobalRelationCountSort();
+}
 
-  const srcNode = edge.getSourceNode();
-  const tgtNode = edge.getTargetNode();
-  const srcFieldId = edge.getSource().port.split('.').pop();
-  const tgtFieldId = edge.getTarget().port.split('.').pop();
+function reorderFieldsBasedOnEdge(edge) {
+  // kept for compatibility; calls global sorter
+  applyGlobalRelationCountSort();
+}
 
-  const newLink = {
-    id: edge.id,
-    source: `${srcNode.id}.R.${srcFieldId}`,
-    target: `${tgtNode.id}.L.${tgtFieldId}`,
-    relation: edge.getData()?.relation || '=',
-    sourceTableName: srcNode.data.name,
-    sourceFieldName:
-      srcNode.data.fields.find((f) => f.id === srcFieldId)?.name || srcFieldId,
-    targetTableName: tgtNode.data.name,
-    targetFieldName:
-      tgtNode.data.fields.find((f) => f.id === tgtFieldId)?.name || tgtFieldId,
-  };
+function resortAllFields() {
+  // Count relations per field
+  const fieldUsage = {};
 
-  updatedData.links.push(newLink);
+  currentGraphData.links.forEach((link) => {
+    const [, , srcField] = link.source.split('.');
+    const [, , tgtField] = link.target.split('.');
 
-  // Move connected fields to top
-  updatedData.tables.forEach((table) => {
-    if (table.id === srcNode.id) {
-      const idx = table.fields.findIndex((f) => f.id === srcFieldId);
-      if (idx > -1) table.fields.unshift(table.fields.splice(idx, 1)[0]);
-    }
-    if (table.id === tgtNode.id) {
-      const idx = table.fields.findIndex((f) => f.id === tgtFieldId);
-      if (idx > -1) table.fields.unshift(table.fields.splice(idx, 1)[0]);
-    }
+    fieldUsage[srcField] = (fieldUsage[srcField] || 0) + 1;
+    fieldUsage[tgtField] = (fieldUsage[tgtField] || 0) + 1;
   });
 
-  currentGraphData = updatedData;
-  loadGraphData(updatedData);
+  // Sort each table fields: most relations first
+  currentGraphData.tables.forEach((table) => {
+    table.fields.sort((a, b) => {
+      const fa = fieldUsage[a.id] || 0;
+      const fb = fieldUsage[b.id] || 0;
+      return fb - fa;
+    });
+  });
 }
 
 // ----------------------------------
@@ -252,14 +376,51 @@ function sortingOrderOfFields(edge) {
 // ----------------------------------
 btnSaveRelation.addEventListener('click', () => {
   if (!selectedEdge) return;
+
   const relation = relationTypeSelect.value;
+  const newLeftField = leftFieldSelect.value; // target field
+  const newRightField = rightFieldSelect.value; // source field
+
+  const srcNode = selectedEdge.getSourceNode();
+  const tgtNode = selectedEdge.getTargetNode();
+
+  // -----------------------------
+  // 1. UPDATE EDGE PORTS
+  // -----------------------------
+  selectedEdge.setSource({
+    cell: srcNode.id,
+    port: `${srcNode.id}.R.${newRightField}`,
+  });
+
+  selectedEdge.setTarget({
+    cell: tgtNode.id,
+    port: `${tgtNode.id}.L.${newLeftField}`,
+  });
+
+  // -----------------------------
+  // 2. UPDATE RELATION LABEL
+  // -----------------------------
   updateEdgeLabelAndStyle(selectedEdge, relation);
 
+  // -----------------------------
+  // 3. UPDATE JSON ENTRY
+  // -----------------------------
   const link = currentGraphData.links.find((l) => l.id === selectedEdge.id);
-  if (link) link.relation = relation;
+  if (link) {
+    link.source = `${srcNode.id}.R.${newRightField}`;
+    link.target = `${tgtNode.id}.L.${newLeftField}`;
+    link.relation = relation;
+  }
 
+  // -----------------------------
+  // 4. RESORT ALL FIELDS
+  // -----------------------------
+  resortAllFields();
+
+  loadGraphData(currentGraphData);
+
+  // Close popup
   edgeControls.style.display = 'none';
-  sortingOrderOfFields(selectedEdge);
   selectedEdge = null;
 });
 
@@ -277,10 +438,20 @@ btnCancelDelete.addEventListener('click', () => {
 });
 btnConfirmDelete.addEventListener('click', () => {
   if (edgeToDelete) {
-    edgeToDelete.remove();
+    // remove visual edge if present
+    try {
+      edgeToDelete.remove();
+    } catch (e) {
+      /* ignore */
+    }
+
+    // remove from data
     currentGraphData.links = currentGraphData.links.filter(
       (l) => l.id !== edgeToDelete.id
     );
+
+    // After delete, reapply global sort & reload to update table order + fields
+    applyGlobalRelationCountSort();
   }
   deleteModal.classList.add('hidden');
   edgeToDelete = null;
@@ -290,36 +461,8 @@ btnConfirmDelete.addEventListener('click', () => {
 // Export JSON
 // ----------------------------------
 document.getElementById('btnExport').addEventListener('click', () => {
-  const tables = graph.getNodes().map((n) => ({
-    id: n.id,
-    name: n.data.name,
-    baseTable: n.data.baseTable || false,
-    position: n.position(),
-    fields: n.data.fields || [],
-  }));
-  const links = graph.getEdges().map((e) => {
-    const srcNode = e.getSourceNode();
-    const tgtNode = e.getTargetNode();
-    const srcFieldId = e.getSource().port.split('.').pop();
-    const tgtFieldId = e.getTarget().port.split('.').pop();
-
-    return {
-      id: e.id,
-      source: e.getSource().port,
-      target: e.getTarget().port,
-      relation: e.getData().relation,
-      sourceTableName: srcNode.data.name,
-      sourceFieldName:
-        srcNode.data.fields.find((f) => f.id === srcFieldId)?.name ||
-        srcFieldId,
-      targetTableName: tgtNode.data.name,
-      targetFieldName:
-        tgtNode.data.fields.find((f) => f.id === tgtFieldId)?.name ||
-        tgtFieldId,
-    };
-  });
-
-  const json = JSON.stringify({ tables, links }, null, 2);
+  // Export from currentGraphData so readable names are preserved
+  const json = JSON.stringify(currentGraphData, null, 2);
   const a = document.createElement('a');
   a.href = URL.createObjectURL(new Blob([json], { type: 'application/json' }));
   a.download = 'erd-export.json';
@@ -337,6 +480,7 @@ document
 // Load Graph
 // ----------------------------------
 function loadGraphData(data) {
+  // data is expected to be { tables: [...], links: [...] }
   currentGraphData = JSON.parse(JSON.stringify(data));
   graph.clearCells();
 
@@ -346,9 +490,11 @@ function loadGraphData(data) {
     nodeMap[table.id] = table;
   });
 
-  currentGraphData.links.forEach((l) => {
-    const [srcTableId, , srcFieldId] = l.source.split('.');
-    const [tgtTableId, , tgtFieldId] = l.target.split('.');
+  // Recreate edges using IDs (port ids must match ports created in nodes)
+  (currentGraphData.links || []).forEach((l) => {
+    // source and target are expected like: TableId.R.FieldId
+    const [srcTableId, , srcFieldId] = String(l.source).split('.');
+    const [tgtTableId, , tgtFieldId] = String(l.target).split('.');
     const srcNode = nodeMap[srcTableId];
     const tgtNode = nodeMap[tgtTableId];
     if (!srcNode || !tgtNode) return;
@@ -364,7 +510,7 @@ function loadGraphData(data) {
           targetMarker: { name: 'classic', size: 8 },
         },
       },
-      data: { ...l },
+      data: { ...l }, // includes readable names if present
     });
 
     updateEdgeLabelAndStyle(edge, l.relation);
@@ -380,7 +526,11 @@ function loadGraphData(data) {
 document.getElementById('btnLoadDemo').addEventListener('click', () => {
   fetch('http://localhost:8000/demoJSON/demo.json')
     .then((res) => res.json())
-    .then(loadGraphData)
+    .then((jsonData) => {
+      // Set data, then apply global sorting and load
+      currentGraphData = JSON.parse(JSON.stringify(jsonData));
+      applyGlobalRelationCountSort();
+    })
     .catch((err) => console.error('Failed to load demo JSON:', err));
 });
 
@@ -389,9 +539,12 @@ document.getElementById('btnLoadDemo').addEventListener('click', () => {
 // ----------------------------------
 window.receiveJSONFromFM = (jsonString) => {
   try {
-    loadGraphData(JSON.parse(jsonString));
-  } catch {
+    const parsed = JSON.parse(jsonString);
+    currentGraphData = JSON.parse(JSON.stringify(parsed));
+    applyGlobalRelationCountSort();
+  } catch (e) {
     alert('Invalid JSON from FileMaker');
+    console.error(e);
   }
 };
 
@@ -402,5 +555,6 @@ window.updateBaseTable = (newBaseTableName) => {
   currentGraphData.tables.forEach(
     (t) => (t.baseTable = t.name === newBaseTableName)
   );
-  loadGraphData(currentGraphData);
+  // Reapply sorting so base flag can affect ordering if needed
+  applyGlobalRelationCountSort();
 };
