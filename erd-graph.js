@@ -211,9 +211,16 @@ function addOrUpdateLinkFromEdge(edge) {
 // GLOBAL: Sort tables & fields
 // ----------------------------------
 function applyGlobalRelationCountSort() {
+  // Deep clone to avoid mutation
   const updated = JSON.parse(
     JSON.stringify(currentGraphData || { tables: [], links: [] })
   );
+
+  // Preserve current positions from graph nodes
+  const nodePositions = {};
+  graph.getNodes().forEach((node) => {
+    nodePositions[node.id] = { x: node.position().x, y: node.position().y };
+  });
 
   const relationCount = {};
   const tableToLinkedFieldIds = {};
@@ -233,6 +240,9 @@ function applyGlobalRelationCountSort() {
   });
 
   updated.tables = (updated.tables || []).map((table) => {
+    // Keep current position if exists
+    if (nodePositions[table.id]) table.position = nodePositions[table.id];
+
     const linkedFields = Array.from(tableToLinkedFieldIds[table.id] || []);
     if (!table.fields) return table;
 
@@ -246,9 +256,11 @@ function applyGlobalRelationCountSort() {
     return { ...table, fields: [...linked, ...other] };
   });
 
+  // Sort tables by relation count descending (most-connected first)
   updated.tables.sort(
     (a, b) => (relationCount[b.id] || 0) - (relationCount[a.id] || 0)
   );
+
   currentGraphData = updated;
   loadGraphData(updated);
 }
@@ -409,7 +421,7 @@ function loadGraphData(data) {
     addRemoveButton(edge);
   });
 
-  graph.centerContent();
+  //graph.centerContent();
 }
 
 // ----------------------------------
