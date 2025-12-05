@@ -5,8 +5,8 @@
       "name": "Order",
       "baseTable": true,
       "position": {
-        "x": -50,
-        "y": 0
+        "x": 200,
+        "y": 50
       },
       "fields": [
         {
@@ -44,8 +44,8 @@
       "name": "Customer",
       "baseTable": false,
       "position": {
-        "x": 0,
-        "y": -10
+        "x": 250,
+        "y": 100
       },
       "fields": [
         {
@@ -83,8 +83,8 @@
       "name": "Vendor",
       "baseTable": false,
       "position": {
-        "x": 100,
-        "y": 20
+        "x": 300,
+        "y": 150
       },
       "fields": [
         {

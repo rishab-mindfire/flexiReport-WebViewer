@@ -5,7 +5,6 @@ body {
 }
 #topbar {
   background: #fff;
-  padding: 10px 15px;
   border-bottom: 1px solid #ddd;
   display: flex;
   justify-content: space-between;
@@ -15,12 +14,12 @@ body {
 .top-left {
   display: flex;
   align-items: center;
-  gap: 20px;
+  margin: 3px;
 }
 
 .title {
-  margin: 0;
-  font-size: 20px;
+  margin: 5px;
+  font-size: 14px;
   font-weight: bold;
 }
 

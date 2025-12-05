@@ -22,6 +22,13 @@ let edgeToDelete = null;
 let currentGraphData = { tables: [], links: [] };
 
 // ----------------------------------
+// Constants
+// ----------------------------------
+const FIELD_HEIGHT = 22;
+const HEADER_HEIGHT = 42;
+const PORT_TOP_MARGIN = 10;
+
+// ----------------------------------
 // Graph Initialization
 // ----------------------------------
 const graph = new Graph({
@@ -43,6 +50,7 @@ const graph = new Graph({
     connector: { name: 'rounded', args: { radius: 8 } },
     router: { name: 'manhattan' },
     validateConnection({ sourcePort, targetPort }) {
+      // Only allow source from right ports and target from left ports
       return (
         String(sourcePort).includes('.R.') && String(targetPort).includes('.L.')
       );
@@ -50,13 +58,6 @@ const graph = new Graph({
   },
   selecting: { enabled: true, multiple: false },
 });
-
-// ----------------------------------
-// Constants
-// ----------------------------------
-const FIELD_HEIGHT = 22;
-const HEADER_HEIGHT = 42;
-const PORT_TOP_MARGIN = 10;
 
 // ----------------------------------
 // Helpers
@@ -78,15 +79,39 @@ function buildTableHtml(table) {
     </div>`;
 }
 
+// ----------------------------------
+// Updated: Ports logic
+// Base table → right only
+// Others → left + right
+// ----------------------------------
 function makePortsForTable(table) {
-  return (table.fields || []).map((f, i) => {
+  return (table.fields || []).flatMap((f, i) => {
     const fid = f.id || f.name;
-    const group = table.baseTable ? 'right' : 'left';
-    return {
-      id: `${table.id}.${group === 'right' ? 'R' : 'L'}.${fid}`,
-      group,
-      args: { y: HEADER_HEIGHT + i * FIELD_HEIGHT + PORT_TOP_MARGIN },
-    };
+
+    if (table.baseTable) {
+      // Base table → only right ports
+      return [
+        {
+          id: `${table.id}.R.${fid}`,
+          group: 'right',
+          args: { y: HEADER_HEIGHT + i * FIELD_HEIGHT + PORT_TOP_MARGIN },
+        },
+      ];
+    } else {
+      // Other tables → both left and right ports
+      return [
+        {
+          id: `${table.id}.L.${fid}`,
+          group: 'left',
+          args: { y: HEADER_HEIGHT + i * FIELD_HEIGHT + PORT_TOP_MARGIN },
+        },
+        {
+          id: `${table.id}.R.${fid}`,
+          group: 'right',
+          args: { y: HEADER_HEIGHT + i * FIELD_HEIGHT + PORT_TOP_MARGIN },
+        },
+      ];
+    }
   });
 }
 
@@ -211,12 +236,11 @@ function addOrUpdateLinkFromEdge(edge) {
 // GLOBAL: Sort tables & fields
 // ----------------------------------
 function applyGlobalRelationCountSort() {
-  // Deep clone to avoid mutation
   const updated = JSON.parse(
     JSON.stringify(currentGraphData || { tables: [], links: [] })
   );
 
-  // Preserve current positions from graph nodes
+  // Preserve current positions
   const nodePositions = {};
   graph.getNodes().forEach((node) => {
     nodePositions[node.id] = { x: node.position().x, y: node.position().y };
@@ -240,7 +264,6 @@ function applyGlobalRelationCountSort() {
   });
 
   updated.tables = (updated.tables || []).map((table) => {
-    // Keep current position if exists
     if (nodePositions[table.id]) table.position = nodePositions[table.id];
 
     const linkedFields = Array.from(tableToLinkedFieldIds[table.id] || []);
@@ -256,7 +279,7 @@ function applyGlobalRelationCountSort() {
     return { ...table, fields: [...linked, ...other] };
   });
 
-  // Sort tables by relation count descending (most-connected first)
+  // Sort tables by relation count descending
   updated.tables.sort(
     (a, b) => (relationCount[b.id] || 0) - (relationCount[a.id] || 0)
   );
@@ -288,6 +311,7 @@ graph.on('edge:click', ({ edge }) => {
   rightFieldSelect.innerHTML = (srcNode.data.fields || [])
     .map((f) => `<option value="${f.id}">${f.name}</option>`)
     .join('');
+
   leftFieldSelect.value = edge.getTarget().port.split('.').pop();
   rightFieldSelect.value = edge.getSource().port.split('.').pop();
 
@@ -420,8 +444,6 @@ function loadGraphData(data) {
     updateEdgeLabelAndStyle(edge, l.relation);
     addRemoveButton(edge);
   });
-
-  //graph.centerContent();
 }
 
 // ----------------------------------
