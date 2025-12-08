@@ -36,6 +36,62 @@
         {
           "id": "32D1571D-1DCB-9F4E-9DB8-E66B30F4A5B9",
           "name": "TotalAmount_n"
+        },
+        {
+          "id": "993A3C5E-33E0E-CD46-9D16-6F3200014701",
+          "name": "VendorID_t"
+        },
+        {
+          "id": "97A5BC90-D955-E3143-8183-1C4AFF5B22E3",
+          "name": "CustomerID_t"
+        },
+        {
+          "id": "7972F288-BADB-144E-291BF-35A8744F7594",
+          "name": "DueAmount_n"
+        },
+        {
+          "id": "4EA528FA-8D06-0644-A1EA7-E56C19D8E7D6",
+          "name": "PaidAmount_n"
+        },
+        {
+          "id": "9D462147-4E45-1F4B-B53D-0990a81D6D6AA",
+          "name": "OrderID_t"
+        },
+        {
+          "id": "F2BB6D1A-8DAC-3740-8152-DE88sA8E56028",
+          "name": "CustomerName_t"
+        },
+        {
+          "id": "32D1571D-1DCB-9F4E-9DB8-E66Bs30F4A5B9",
+          "name": "TotalAmount_n"
+        },
+        {
+          "id": "993A3C5E-3E0E-CD46-9D16-6F32st00014701",
+          "name": "VendorID_t"
+        },
+        {
+          "id": "97A5BC90-D955-E343-8183-1C4AFF52B22E3",
+          "name": "CustomerID_t"
+        },
+        {
+          "id": "7972F288-BAsDB-144E-91BF-35A8744F7594",
+          "name": "DueAmount_n"
+        },
+        {
+          "id": "4EA528FA-8Da06-0644-AEA7-E56C19D8E7D6",
+          "name": "PaidAmount_n"
+        },
+        {
+          "id": "9D462147-4Ea45-1F4B-B53D-099081D6D6AA",
+          "name": "OrderID_t"
+        },
+        {
+          "id": "F2BB6D1A-8DAC-3740-8152-DaE88A8E56028",
+          "name": "CustomerName_t"
+        },
+        {
+          "id": "32D1571D-1DCB-9F4E-9DB8-Ea66B30F4A5B9",
+          "name": "TotalAmount_n"
         }
       ]
     },
@@ -63,6 +119,38 @@
         {
           "id": "E3F206E9-1388-2B4A-B956-26D123337613",
           "name": "VendorEmail_t"
+        },
+        {
+          "id": "E3F206E9-13s88-2B4A-t956-26D123337613",
+          "name": "VendorID_t"
+        },
+        {
+          "id": "D8E1E177-99D4-3743q-97C8-69ABF7B96B9C",
+          "name": "VendorCompanyAddresh_t"
+        },
+        {
+          "id": "40C3D535-B8E8-8qB48-8E35-EFDE3EE52BD3",
+          "name": "VendorName_t"
+        },
+        {
+          "id": "E3F2q06E9-1388-2B4A-B956-26D123337613",
+          "name": "VendorEmail_t"
+        },
+        {
+          "id": "E3F206E9-1388-2B4A-tq956-26D123337613",
+          "name": "VendorID_t"
+        },
+        {
+          "id": "D8E1E177-99D4-3743-97C8-69ABFw7B96B9C",
+          "name": "VendorCompanyAddresh_t"
+        },
+        {
+          "id": "40C3Dw535-B8E8-8B48-8E35-EFDE3EE52BD3",
+          "name": "VendorName_t"
+        },
+        {
+          "id": "E3F206E9-1388-2B4A-B956-2w6D123337613",
+          "name": "VendorEmail_t"
         }
       ]
     },
@@ -71,8 +159,8 @@
       "name": "Customer",
       "baseTable": false,
       "position": {
-        "x": 840,
-        "y": 130
+        "x": 820,
+        "y": 60
       },
       "fields": [
         {
@@ -108,20 +196,20 @@
   ],
   "links": [
     {
-      "id": "2c059a9e-53fc-4ce5-a149-4aba693ba358",
+      "id": "72b3213b-bb4a-45f8-a153-8ca81d6af90b",
       "source": "E4ADAF6E-3A8B-9E4A-BA6A-19CA67C4E0A2.R.993A3C5E-3E0E-CD46-9D16-6F3200014701",
       "target": "4E81159D-836D-634C-855E-C12F42137D00.L.E3F206E9-1388-2B4A-t956-26D123337613",
-      "relation": "≥",
+      "relation": "=",
       "sourceTableName": "Order",
       "sourceFieldName": "VendorID_t",
       "targetTableName": "Vendor",
       "targetFieldName": "VendorID_t"
     },
     {
-      "id": "25291770-c34b-4b25-911d-ddf4cb5e35e3",
+      "id": "6a33772a-122e-4b93-9a69-75b67563c394",
       "source": "E4ADAF6E-3A8B-9E4A-BA6A-19CA67C4E0A2.R.97A5BC90-D955-E343-8183-1C4AFF5B22E3",
       "target": "25DB383E-714F-3747-9859-50A1ACAA0D64.L.0C3E9DD0-A3AC-3341-ACF9-D6A12C4D926E",
-      "relation": "≤",
+      "relation": "=",
       "sourceTableName": "Order",
       "sourceFieldName": "CustomerID_t",
       "targetTableName": "Customer",
