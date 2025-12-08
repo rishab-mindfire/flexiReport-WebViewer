@@ -55,43 +55,43 @@
         },
         {
           "id": "9D462147-4E45-1F4B-B53D-0990a81D6D6AA",
-          "name": "OrderID_t"
+          "name": "field 1"
         },
         {
           "id": "F2BB6D1A-8DAC-3740-8152-DE88sA8E56028",
-          "name": "CustomerName_t"
+          "name": "field 12"
         },
         {
           "id": "32D1571D-1DCB-9F4E-9DB8-E66Bs30F4A5B9",
-          "name": "TotalAmount_n"
+          "name": "field 3"
         },
         {
           "id": "993A3C5E-3E0E-CD46-9D16-6F32st00014701",
-          "name": "VendorID_t"
+          "name": "field 4"
         },
         {
           "id": "97A5BC90-D955-E343-8183-1C4AFF52B22E3",
-          "name": "CustomerID_t"
+          "name": "field 5"
         },
         {
           "id": "7972F288-BAsDB-144E-91BF-35A8744F7594",
-          "name": "DueAmount_n"
+          "name": "field 6"
         },
         {
           "id": "4EA528FA-8Da06-0644-AEA7-E56C19D8E7D6",
-          "name": "PaidAmount_n"
+          "name": "field 7"
         },
         {
           "id": "9D462147-4Ea45-1F4B-B53D-099081D6D6AA",
-          "name": "OrderID_t"
+          "name": "field 8"
         },
         {
           "id": "F2BB6D1A-8DAC-3740-8152-DaE88A8E56028",
-          "name": "CustomerName_t"
+          "name": "field 9"
         },
         {
           "id": "32D1571D-1DCB-9F4E-9DB8-Ea66B30F4A5B9",
-          "name": "TotalAmount_n"
+          "name": "field 10"
         }
       ]
     },

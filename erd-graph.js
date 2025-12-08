@@ -48,7 +48,7 @@ const graph = new Graph({
     allowLoop: false,
     allowMulti: true,
     connector: { name: 'rounded', args: { radius: 8 } },
-    router: { name: 'manhattan' },
+    router: { name: 'er' },
     validateConnection({ sourcePort, targetPort }) {
       // Only allow source from right ports and target from left ports
       return (
