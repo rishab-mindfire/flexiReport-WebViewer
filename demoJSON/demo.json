@@ -5,10 +5,18 @@
       "name": "Order",
       "baseTable": true,
       "position": {
-        "x": 200,
-        "y": 50
+        "x": 120,
+        "y": 140
       },
       "fields": [
+        {
+          "id": "993A3C5E-3E0E-CD46-9D16-6F3200014701",
+          "name": "VendorID_t"
+        },
+        {
+          "id": "97A5BC90-D955-E343-8183-1C4AFF5B22E3",
+          "name": "CustomerID_t"
+        },
         {
           "id": "7972F288-BADB-144E-91BF-35A8744F7594",
           "name": "DueAmount_n"
@@ -16,10 +24,6 @@
         {
           "id": "4EA528FA-8D06-0644-AEA7-E56C19D8E7D6",
           "name": "PaidAmount_n"
-        },
-        {
-          "id": "993A3C5E-3E0E-CD46-9D16-6F3200014701",
-          "name": "VendorID_t"
         },
         {
           "id": "9D462147-4E45-1F4B-B53D-099081D6D6AA",
@@ -32,10 +36,33 @@
         {
           "id": "32D1571D-1DCB-9F4E-9DB8-E66B30F4A5B9",
           "name": "TotalAmount_n"
+        }
+      ]
+    },
+    {
+      "id": "4E81159D-836D-634C-855E-C12F42137D00",
+      "name": "Vendor",
+      "baseTable": false,
+      "position": {
+        "x": 740,
+        "y": 360
+      },
+      "fields": [
+        {
+          "id": "E3F206E9-1388-2B4A-t956-26D123337613",
+          "name": "VendorID_t"
         },
         {
-          "id": "97A5BC90-D955-E343-8183-1C4AFF5B22E3",
-          "name": "CustomerID_t"
+          "id": "D8E1E177-99D4-3743-97C8-69ABF7B96B9C",
+          "name": "VendorCompanyAddresh_t"
+        },
+        {
+          "id": "40C3D535-B8E8-8B48-8E35-EFDE3EE52BD3",
+          "name": "VendorName_t"
+        },
+        {
+          "id": "E3F206E9-1388-2B4A-B956-26D123337613",
+          "name": "VendorEmail_t"
         }
       ]
     },
@@ -44,17 +71,17 @@
       "name": "Customer",
       "baseTable": false,
       "position": {
-        "x": 250,
-        "y": 100
+        "x": 840,
+        "y": 130
       },
       "fields": [
         {
-          "id": "B4DEA40E-7DED-1B40-AC1E-C447C5B58F20",
-          "name": "CustomerMobile_t"
-        },
-        {
           "id": "0C3E9DD0-A3AC-3341-ACF9-D6A12C4D926E",
           "name": "Customer_ID"
+        },
+        {
+          "id": "B4DEA40E-7DED-1B40-AC1E-C447C5B58F20",
+          "name": "CustomerMobile_t"
         },
         {
           "id": "6E507713-FB76-DD45-AE4C-91596EB9A38B",
@@ -77,34 +104,28 @@
           "name": "CustomerNote_t"
         }
       ]
-    },
-    {
-      "id": "4E81159D-836D-634C-855E-C12F42137D00",
-      "name": "Vendor",
-      "baseTable": false,
-      "position": {
-        "x": 300,
-        "y": 150
-      },
-      "fields": [
-        {
-          "id": "E3F206E9-1388-2B4A-t956-26D123337613",
-          "name": "VendorID_t"
-        },
-        {
-          "id": "D8E1E177-99D4-3743-97C8-69ABF7B96B9C",
-          "name": "VendorCompanyAddresh_t"
-        },
-        {
-          "id": "40C3D535-B8E8-8B48-8E35-EFDE3EE52BD3",
-          "name": "VendorName_t"
-        },
-        {
-          "id": "E3F206E9-1388-2B4A-B956-26D123337613",
-          "name": "VendorEmail_t"
-        }
-      ]
     }
   ],
-  "links": []
+  "links": [
+    {
+      "id": "2c059a9e-53fc-4ce5-a149-4aba693ba358",
+      "source": "E4ADAF6E-3A8B-9E4A-BA6A-19CA67C4E0A2.R.993A3C5E-3E0E-CD46-9D16-6F3200014701",
+      "target": "4E81159D-836D-634C-855E-C12F42137D00.L.E3F206E9-1388-2B4A-t956-26D123337613",
+      "relation": "≥",
+      "sourceTableName": "Order",
+      "sourceFieldName": "VendorID_t",
+      "targetTableName": "Vendor",
+      "targetFieldName": "VendorID_t"
+    },
+    {
+      "id": "25291770-c34b-4b25-911d-ddf4cb5e35e3",
+      "source": "E4ADAF6E-3A8B-9E4A-BA6A-19CA67C4E0A2.R.97A5BC90-D955-E343-8183-1C4AFF5B22E3",
+      "target": "25DB383E-714F-3747-9859-50A1ACAA0D64.L.0C3E9DD0-A3AC-3341-ACF9-D6A12C4D926E",
+      "relation": "≤",
+      "sourceTableName": "Order",
+      "sourceFieldName": "CustomerID_t",
+      "targetTableName": "Customer",
+      "targetFieldName": "Customer_ID"
+    }
+  ]
 }

@@ -79,10 +79,17 @@ function buildTableHtml(table) {
     </div>`;
 }
 
+function saveNodePositions() {
+  const positions = {};
+  graph.getNodes().forEach((node) => {
+    const pos = node.position();
+    positions[node.id] = { x: pos.x, y: pos.y };
+  });
+  return positions;
+}
+
 // ----------------------------------
-// Updated: Ports logic
-// Base table → right only
-// Others → left + right
+// Port connection formation
 // ----------------------------------
 function makePortsForTable(table) {
   return (table.fields || []).flatMap((f, i) => {
@@ -152,15 +159,36 @@ function addTableNode(table) {
 }
 
 function updateEdgeLabelAndStyle(edge, relation) {
+  const width = 10;
+  const height = 8;
+
   edge.setLabels([
     {
       position: 0.5,
       attrs: {
-        text: { text: relation, fill: '#0f172a', fontWeight: 700 },
-        rect: { fill: '#f8fafc', stroke: '#cbd5e1', rx: 6, ry: 6 },
+        text: {
+          text: relation,
+          fill: '#0f172a',
+          fontSize: 14,
+          fontWeight: 700,
+          textAnchor: 'middle',
+        },
+        rect: {
+          fill: '#f8fafc',
+          stroke: '#cbd5e1',
+          rx: 6,
+          ry: 6,
+
+          refWidth: width,
+          refHeight: height,
+
+          refX: -width / 2,
+          refY: -height / 2,
+        },
       },
     },
   ]);
+
   edge.setData({ ...edge.getData(), relation });
 }
 
@@ -198,6 +226,7 @@ function addRemoveButton(edge) {
 // Add/Update link in currentGraphData
 // ----------------------------------
 function addOrUpdateLinkFromEdge(edge) {
+  // console.log(edge);
   const srcNode = edge.getSourceNode();
   const tgtNode = edge.getTargetNode();
   if (!srcNode || !tgtNode) return;
@@ -240,11 +269,8 @@ function applyGlobalRelationCountSort() {
     JSON.stringify(currentGraphData || { tables: [], links: [] })
   );
 
-  // Preserve current positions
-  const nodePositions = {};
-  graph.getNodes().forEach((node) => {
-    nodePositions[node.id] = { x: node.position().x, y: node.position().y };
-  });
+  // Keep current positions
+  const nodePositions = saveNodePositions();
 
   const relationCount = {};
   const tableToLinkedFieldIds = {};
@@ -264,6 +290,7 @@ function applyGlobalRelationCountSort() {
   });
 
   updated.tables = (updated.tables || []).map((table) => {
+    // Preserve current position
     if (nodePositions[table.id]) table.position = nodePositions[table.id];
 
     const linkedFields = Array.from(tableToLinkedFieldIds[table.id] || []);
@@ -390,24 +417,6 @@ btnConfirmDelete.addEventListener('click', () => {
 });
 
 // ----------------------------------
-// Export JSON
-// ----------------------------------
-document.getElementById('btnExport').addEventListener('click', () => {
-  const json = JSON.stringify(currentGraphData, null, 2);
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(new Blob([json], { type: 'application/json' }));
-  a.download = 'erd-export.json';
-  a.click();
-});
-
-// ----------------------------------
-// Center Graph
-// ----------------------------------
-document
-  .getElementById('btnCenter')
-  .addEventListener('click', () => graph.centerContent());
-
-// ----------------------------------
 // Load Graph
 // ----------------------------------
 function loadGraphData(data) {
@@ -445,6 +454,34 @@ function loadGraphData(data) {
     addRemoveButton(edge);
   });
 }
+// ----------------------------------
+// Center Graph
+// ----------------------------------
+document
+  .getElementById('btnCenter')
+  .addEventListener('click', () => graph.centerContent());
+
+// ----------------------------------
+// Export JSON
+// ----------------------------------
+document.getElementById('btnExport').addEventListener('click', () => {
+  // Clone current graph data to avoid mutation
+  const exportData = JSON.parse(JSON.stringify(currentGraphData));
+
+  // Save current live positions
+  graph.getNodes().forEach((node) => {
+    const pos = node.position();
+    const table = exportData.tables.find((t) => t.id === node.id);
+    if (table) table.position = { x: pos.x, y: pos.y };
+  });
+  const json = JSON.stringify(exportData, null, 2);
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([json], { type: 'application/json' }));
+  a.download = 'erd-export.json';
+  a.click();
+
+  //  console.log('Exported JSON:', exportData);
+});
 
 // ----------------------------------
 // Demo / FileMaker
