@@ -60,7 +60,7 @@ const graph = new Graph({
 });
 
 // ----------------------------------
-// Helpers
+// Build HTML
 // ----------------------------------
 function buildTableHtml(table) {
   return `
@@ -78,7 +78,9 @@ function buildTableHtml(table) {
       </div>
     </div>`;
 }
-
+// ----------------------------------
+// Track Node Positions
+// ----------------------------------
 function saveNodePositions() {
   const positions = {};
   graph.getNodes().forEach((node) => {
@@ -96,7 +98,7 @@ function makePortsForTable(table) {
     const fid = f.id || f.name;
 
     if (table.baseTable) {
-      // Base table → only right ports
+      // Base table  only right ports opens
       return [
         {
           id: `${table.id}.R.${fid}`,
@@ -105,7 +107,7 @@ function makePortsForTable(table) {
         },
       ];
     } else {
-      // Other tables → both left and right ports
+      // Other left and right ports opens
       return [
         {
           id: `${table.id}.L.${fid}`,
@@ -160,7 +162,7 @@ function addTableNode(table) {
 
 function updateEdgeLabelAndStyle(edge, relation) {
   const width = 10;
-  const height = 8;
+  const height = 2;
 
   edge.setLabels([
     {
@@ -168,16 +170,16 @@ function updateEdgeLabelAndStyle(edge, relation) {
       attrs: {
         text: {
           text: relation,
-          fill: '#0f172a',
-          fontSize: 14,
-          fontWeight: 700,
+          fill: '#05070eff',
+          fontSize: 12,
+          fontWeight: 600,
           textAnchor: 'middle',
         },
         rect: {
           fill: '#f8fafc',
-          stroke: '#cbd5e1',
+          stroke: '#0f4991ff',
           rx: 6,
-          ry: 6,
+          ry: 20,
 
           refWidth: width,
           refHeight: height,
@@ -324,7 +326,9 @@ graph.on('edge:connected', ({ edge }) => {
   addOrUpdateLinkFromEdge(edge);
   applyGlobalRelationCountSort();
 });
-
+// ----------------------------------
+// Relation-ship Events
+// ----------------------------------
 graph.on('edge:click', ({ edge }) => {
   selectedEdge = edge;
   relationTypeSelect.value = edge.getData()?.relation || '=';
