@@ -459,6 +459,106 @@ function loadGraphData(data) {
   });
 }
 // ----------------------------------
+// SQL Generation with joinLevel
+// ----------------------------------
+// Build LEFT JOIN clause from a link
+function buildJoinSQL(link, addedTables = new Set()) {
+  if (!link) return '';
+  const sTable = link.sourceTableName;
+  const sField = link.sourceFieldName;
+  const tTable = link.targetTableName;
+  const tField = link.targetFieldName;
+  const rel = link.relation || '=';
+
+  if (!sTable || !tTable) return '';
+
+  // Avoid duplicate joins
+  if (addedTables.has(tTable)) return '';
+  addedTables.add(tTable);
+
+  return `LEFT JOIN "${tTable}" ON "${sTable}"."${sField}" ${rel} "${tTable}"."${tField}"`;
+}
+
+// Generate SQL for a single field and track joinLevel
+function getSQLForField(fieldName) {
+  const tables = currentGraphData.tables || [];
+  const links = currentGraphData.links || [];
+
+  // Find target table
+  let targetTableObj = null;
+  for (const t of tables) {
+    if (
+      (t.fields || []).some((f) => f.name === fieldName || f.id === fieldName)
+    ) {
+      targetTableObj = t;
+      break;
+    }
+  }
+  if (!targetTableObj) return { sql: '', joinLevel: 0 };
+
+  const targetTable = targetTableObj.name;
+
+  // Find base table
+  const baseTableObj = tables.find((t) => t.baseTable);
+  if (!baseTableObj) return { sql: '', joinLevel: 0 };
+  const baseTable = baseTableObj.name;
+
+  // BFS to find minimal path from base to target table
+  const visited = new Set([baseTable]);
+  const queue = [{ table: baseTable, path: [] }];
+  let finalPath = [];
+
+  while (queue.length) {
+    const { table, path } = queue.shift();
+
+    if (table === targetTable) {
+      finalPath = path;
+      break;
+    }
+
+    links.forEach((l) => {
+      const s = l.sourceTableName;
+      const t = l.targetTableName;
+      if (!s || !t) return;
+
+      let nextTable = null;
+      if (s === table && !visited.has(t)) nextTable = t;
+      else if (t === table && !visited.has(s)) nextTable = s;
+
+      if (nextTable) {
+        visited.add(nextTable);
+        queue.push({ table: nextTable, path: [...path, l] });
+      }
+    });
+  }
+
+  // Build SQL string in one line
+  const addedTables = new Set();
+  const joinClauses = finalPath
+    .map((l) => buildJoinSQL(l, addedTables))
+    .filter(Boolean)
+    .join(' ');
+
+  return {
+    sql: `SELECT "${targetTable}"."${fieldName}" FROM "${baseTable}" ${joinClauses}`,
+    joinLevel: finalPath.length, // number of joins away from base table
+  };
+}
+
+// Build map of SQL for all fields with joinLevel
+function buildFieldSQLMap() {
+  const result = {};
+  (currentGraphData.tables || []).forEach((table) => {
+    (table.fields || []).forEach((field) => {
+      const { sql, joinLevel } = getSQLForField(field.name);
+      result[field.name] = { sql, joinLevel };
+    });
+  });
+  return result;
+}
+
+//--------------------------------------------------------------------------------------------------------
+// ----------------------------------
 // Center Graph
 // ----------------------------------
 document
@@ -469,22 +569,21 @@ document
 // Export JSON
 // ----------------------------------
 document.getElementById('btnExport').addEventListener('click', () => {
-  // Clone current graph data to avoid mutation
   const exportData = JSON.parse(JSON.stringify(currentGraphData));
-
-  // Save current live positions
+  const sqlMap = buildFieldSQLMap();
   graph.getNodes().forEach((node) => {
     const pos = node.position();
     const table = exportData.tables.find((t) => t.id === node.id);
     if (table) table.position = { x: pos.x, y: pos.y };
   });
+  exportData.sqlMap = sqlMap;
   const json = JSON.stringify(exportData, null, 2);
   const a = document.createElement('a');
   a.href = URL.createObjectURL(new Blob([json], { type: 'application/json' }));
   a.download = 'erd-export.json';
   a.click();
 
-  //  console.log('Exported JSON:', exportData);
+  //console.log('Exported JSON:', exportData);
 });
 
 // ----------------------------------
@@ -516,4 +615,21 @@ window.updateBaseTable = (newBaseTableName) => {
     (t) => (t.baseTable = t.name === newBaseTableName)
   );
   applyGlobalRelationCountSort();
+};
+
+window.sendJSON = async () => {
+  const exportData = await JSON.parse(JSON.stringify(currentGraphData));
+  const sqlMap = buildFieldSQLMap();
+  graph.getNodes().forEach((node) => {
+    const pos = node.position();
+    const table = exportData.tables.find((t) => t.id === node.id);
+    if (table) table.position = { x: pos.x, y: pos.y };
+  });
+
+  exportData.sqlMap = sqlMap;
+  const jsonData = JSON.stringify(exportData, null, 2);
+
+  if (window.FileMaker && FileMaker.PerformScript) {
+    FileMaker.PerformScript('receiveJSON', jsonData);
+  }
 };
