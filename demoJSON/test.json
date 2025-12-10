@@ -1,179 +1,116 @@
 {
-  "tables": [
+  "Vendor": [
     {
-      "id": "4E81159D-836D-634C-855E-C12F42137D00",
-      "name": "Vendor",
-      "baseTable": false,
-      "position": {
-        "x": 100,
-        "y": 210
-      },
-      "fields": [
-        {
-          "id": "2EFB6B52-A537-EB44-9501-091738FD1228",
-          "name": "VendorID_t"
-        },
-        {
-          "id": "40C3D535-B8E8-8B48-8E35-EFDE3EE52BD3",
-          "name": "VendorName_t"
-        },
-        {
-          "id": "E3F206E9-1388-2B4A-B956-26D123337613",
-          "name": "VendorEmail_t"
-        },
-        {
-          "id": "D8E1E177-99D4-3743-97C8-69ABF7B96B9C",
-          "name": "VendorCompanyAddresh_t"
-        },
-        {
-          "id": "40C3D535-B8E8-8Be48-8E35-EFDE3EE52BD3",
-          "name": "VendorName_t1"
-        },
-        {
-          "id": "40C3D535-B8wE8-8B48-8E35-EFDE3EE52BD3",
-          "name": "VendorName_t2"
-        },
-        {
-          "id": "430C3D535-B8E8-8B48-8E35-EFDE3EE52BD3",
-          "name": "VendorName_t3"
-        },
-        {
-          "id": "40C3D5f35-B8wE8-8B48-8Ea35-EFDE3EE52BD3",
-          "name": "VendorName_t4"
-        },
-        {
-          "id": "430C3D535-Ba8E8-8B48-8E35-EFDaE3EE52BD3",
-          "name": "VendorName_t5"
-        },
-        {
-          "id": "40C3D535-B8wE8-8B48-8E35-EFDE3EytE52BD3",
-          "name": "VendorName_t6"
-        },
-        {
-          "id": "430C3D535-B8E8-8B48-8E35-EFDEqw3EE52BD3",
-          "name": "VendorName_t7"
-        }
-      ]
+      "fieldName": "VendorID_t",
+      "fieldId": "9F303315-7BB0-9649-94E3-061A699DDADE",
+      "sql": "SELECT \"Vendor\".\"VendorID_t\" FROM \"Order\" LEFT JOIN \"Vendor\" ON \"Order\".\"VendorID_t\" = \"Vendor\".\"VendorID_t\"",
+      "joinLevel": 1
     },
     {
-      "id": "E4ADAF6E-3A8B-9E4A-BA6A-19CA67C4E0A2",
-      "name": "Order",
-      "baseTable": true,
-      "position": {
-        "x": -280,
-        "y": 60
-      },
-      "fields": [
-        {
-          "id": "993A3C5E-3E0E-CD46-9D16-6F3200014701",
-          "name": "VendorID_t"
-        },
-        {
-          "id": "97A5BC90-D955-E343-8183-1C4AFF5B22E3",
-          "name": "CustomerID_t"
-        },
-        {
-          "id": "9D462147-4E45-1F4B-B53D-099081D6D6AA",
-          "name": "OrderID_t"
-        },
-        {
-          "id": "F2BB6D1A-8DAC-3740-8152-DE88A8E56028",
-          "name": "CustomerName_t"
-        },
-        {
-          "id": "32D1571D-1DCB-9F4E-9DB8-E66B30F4A5B9",
-          "name": "TotalAmount_n"
-        },
-        {
-          "id": "4EA528FA-8D06-0644-AEA7-E56C19D8E7D6",
-          "name": "PaidAmount_n"
-        },
-        {
-          "id": "7972F288-BADB-144E-91BF-35A8744F7594",
-          "name": "DueAmount_n"
-        },
-        {
-          "id": "993A3Cr5E-3E0E-CD46-9D16-6F3200014701",
-          "name": "Order_t1"
-        },
-        {
-          "id": "993A3Cr5E-3E0E-CD46-9D416-6F3200014701",
-          "name": "Order_t2"
-        },
-        {
-          "id": "993A3Cr5E-3E0E-CD46-9D16-6F32006014701",
-          "name": "Order_t3"
-        },
-        {
-          "id": "993A23Cr5E-3E0E-CD46-9D416-6F3200014701",
-          "name": "Order_t4"
-        },
-        {
-          "id": "993A3Cr5E-3E0E-CD46-9Dt416-6F3200014701",
-          "name": "Order_t5"
-        },
-        {
-          "id": "993A3Cr5E-3E0E-Css46-9D416-6F3200014701",
-          "name": "Order_t6"
-        },
-        {
-          "id": "993A3Cr5E-3E0E-CD46-29D416-6F3200014701",
-          "name": "Order_t7"
-        }
-      ]
+      "fieldName": "VendorAddressID_t",
+      "fieldId": "53A2EABB-2B99-264B-8672-8A6B488F90DF",
+      "sql": "SELECT \"Vendor\".\"VendorAddressID_t\" FROM \"Order\" LEFT JOIN \"Vendor\" ON \"Order\".\"VendorID_t\" = \"Vendor\".\"VendorID_t\"",
+      "joinLevel": 1
     },
     {
-      "id": "25DB383E-714F-3747-9859-50A1ACAA0D64",
-      "name": "Customer",
-      "baseTable": false,
-      "position": {
-        "x": 90,
-        "y": 0
-      },
-      "fields": [
-        {
-          "id": "0C3E9DD0-A3AC-3341-ACF9-D6A12C4D926E",
-          "name": "Customer_ID"
-        },
-        {
-          "id": "C9EFB347-7C7D-B944-BCB7-1DDA33111FCF",
-          "name": "CustomerName_t"
-        },
-        {
-          "id": "65EFD090-4FD4-E949-A765-7067DCA7155F",
-          "name": "CustomerEmail_t"
-        },
-        {
-          "id": "2C423BBF-EF57-FD46-8C88-C382C9C88911",
-          "name": "CustomerRating_n"
-        },
-        {
-          "id": "DAE2037A-DEF7-0144-A83D-220E120542B1",
-          "name": "CustomerNote_t"
-        },
-        {
-          "id": "6E507713-FB76-DD45-AE4C-91596EB9A38B",
-          "name": "CustomerAdd"
-        },
-        {
-          "id": "B4DEA40E-7DED-1B40-AC1E-C447C5B58F20",
-          "name": "CustomerMobile_t"
-        }
-      ]
+      "fieldName": "VendorName_t",
+      "fieldId": "2DE6C498-9E47-0C47-A0AB-3B53A5CA32D1",
+      "sql": "SELECT \"Vendor\".\"VendorName_t\" FROM \"Order\" LEFT JOIN \"Vendor\" ON \"Order\".\"VendorID_t\" = \"Vendor\".\"VendorID_t\"",
+      "joinLevel": 1
+    },
+    {
+      "fieldName": "VendorEmail_t",
+      "fieldId": "9ED25922-900E-CB4A-BC2F-AA1A30486FA2",
+      "sql": "SELECT \"Vendor\".\"VendorEmail_t\" FROM \"Order\" LEFT JOIN \"Vendor\" ON \"Order\".\"VendorID_t\" = \"Vendor\".\"VendorID_t\"",
+      "joinLevel": 1
+    },
+    {
+      "fieldName": "MobileNo_t",
+      "fieldId": "F8B937BA-431B-2B4C-8176-266642EFC316",
+      "sql": "SELECT \"Vendor\".\"MobileNo_t\" FROM \"Order\" LEFT JOIN \"Vendor\" ON \"Order\".\"VendorID_t\" = \"Vendor\".\"VendorID_t\"",
+      "joinLevel": 1
     }
   ],
-  "links": [
+  "Order": [
     {
-      "id": "8bafa4df-744b-4202-8653-ab930f139546",
-      "source": "Order.R.VendorID_t",
-      "target": "Vendor.L.VendorID_t",
-      "relation": "="
+      "fieldName": "VendorID_t",
+      "fieldId": "7A0F6FD2-4247-3C4E-9798-FDD476DC321B",
+      "sql": "SELECT \"Vendor\".\"VendorID_t\" FROM \"Order\" LEFT JOIN \"Vendor\" ON \"Order\".\"VendorID_t\" = \"Vendor\".\"VendorID_t\"",
+      "joinLevel": 1
     },
     {
-      "id": "7ab5ba5f-ccce-4c27-9b64-88947c07caf1",
-      "source": "Order.R.CustomerID_t",
-      "target": "Customer.L.Customer_ID",
-      "relation": "="
+      "fieldName": "OrderID_t",
+      "fieldId": "F7679CFC-F9E5-F24A-B160-86CE8FC218E6",
+      "sql": "SELECT \"Order\".\"OrderID_t\" FROM \"Order\"",
+      "joinLevel": 0
+    },
+    {
+      "fieldName": "PaymentStatus_t",
+      "fieldId": "91916619-4EDE-104D-AC12-F1F862B588C3",
+      "sql": "SELECT \"Order\".\"PaymentStatus_t\" FROM \"Order\"",
+      "joinLevel": 0
+    },
+    {
+      "fieldName": "TotalAmount_n",
+      "fieldId": "93AC43BC-3507-4042-9B98-7842BBAB5961",
+      "sql": "SELECT \"Order\".\"TotalAmount_n\" FROM \"Order\"",
+      "joinLevel": 0
+    },
+    {
+      "fieldName": "CustomerID_t",
+      "fieldId": "D38AEB11-F9BC-6947-8E3C-EED1A36F299E",
+      "sql": "SELECT \"Order\".\"CustomerID_t\" FROM \"Order\"",
+      "joinLevel": 0
+    },
+    {
+      "fieldName": "RecePaidTotalAmount",
+      "fieldId": "78781947-82DB-4547-9162-D2D2BDB2BD29",
+      "sql": "SELECT \"Order\".\"RecePaidTotalAmount\" FROM \"Order\"",
+      "joinLevel": 0
+    },
+    {
+      "fieldName": "PaidAmount_n",
+      "fieldId": "80CF8A1D-8CD1-5E4B-A3B5-0C9092442DD7",
+      "sql": "SELECT \"Order\".\"PaidAmount_n\" FROM \"Order\"",
+      "joinLevel": 0
+    },
+    {
+      "fieldName": "DueAmount_n",
+      "fieldId": "A867B34C-C4A7-1D4E-BFD5-3CDA46854463",
+      "sql": "SELECT \"Order\".\"DueAmount_n\" FROM \"Order\"",
+      "joinLevel": 0
+    }
+  ],
+  "VendorAddress": [
+    {
+      "fieldName": "VendorID_Add_t",
+      "fieldId": "BE952112-99B5-6345-985A-4481B63FA020",
+      "sql": "SELECT \"VendorAddress\".\"VendorID_Add_t\" FROM \"Order\" LEFT JOIN \"Vendor\" ON \"Order\".\"VendorID_t\" = \"Vendor\".\"VendorID_t\" LEFT JOIN \"VendorAddress\" ON \"Vendor\".\"VendorAddressID_t\" = \"VendorAddress\".\"VendorID_Add_t\"",
+      "joinLevel": 2
+    },
+    {
+      "fieldName": "VendorCountryName_t",
+      "fieldId": "BBB54156-EB1F-2142-B717-6E5DD8143335",
+      "sql": "SELECT \"VendorAddress\".\"VendorCountryName_t\" FROM \"Order\" LEFT JOIN \"Vendor\" ON \"Order\".\"VendorID_t\" = \"Vendor\".\"VendorID_t\" LEFT JOIN \"VendorAddress\" ON \"Vendor\".\"VendorAddressID_t\" = \"VendorAddress\".\"VendorID_Add_t\"",
+      "joinLevel": 2
+    },
+    {
+      "fieldName": "VendorCountryID_t",
+      "fieldId": "AA75543E-EEB5-B34F-A4D5-2135FBDC57EF",
+      "sql": "SELECT \"VendorAddress\".\"VendorCountryID_t\" FROM \"Order\" LEFT JOIN \"Vendor\" ON \"Order\".\"VendorID_t\" = \"Vendor\".\"VendorID_t\" LEFT JOIN \"VendorAddress\" ON \"Vendor\".\"VendorAddressID_t\" = \"VendorAddress\".\"VendorID_Add_t\"",
+      "joinLevel": 2
+    },
+    {
+      "fieldName": "VendorDistrict_t",
+      "fieldId": "258C46AD-CAA7-7E44-8896-56700C2615D7",
+      "sql": "SELECT \"VendorAddress\".\"VendorDistrict_t\" FROM \"Order\" LEFT JOIN \"Vendor\" ON \"Order\".\"VendorID_t\" = \"Vendor\".\"VendorID_t\" LEFT JOIN \"VendorAddress\" ON \"Vendor\".\"VendorAddressID_t\" = \"VendorAddress\".\"VendorID_Add_t\"",
+      "joinLevel": 2
+    },
+    {
+      "fieldName": "VendorPinCode_t",
+      "fieldId": "61931C14-C682-E745-B784-B0B03008698B",
+      "sql": "SELECT \"VendorAddress\".\"VendorPinCode_t\" FROM \"Order\" LEFT JOIN \"Vendor\" ON \"Order\".\"VendorID_t\" = \"Vendor\".\"VendorID_t\" LEFT JOIN \"VendorAddress\" ON \"Vendor\".\"VendorAddressID_t\" = \"VendorAddress\".\"VendorID_Add_t\"",
+      "joinLevel": 2
     }
   ]
 }
