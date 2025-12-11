@@ -459,9 +459,8 @@ function loadGraphData(data) {
   });
 }
 // ----------------------------------
-// SQL Generation with joinLevel (BUG-FIXED)
+// SQL Generation with joinLevel
 // ----------------------------------
-
 // Build LEFT JOIN clause from a link
 function buildJoinSQL(link, addedTables = new Set()) {
   if (!link) return '';
@@ -480,7 +479,7 @@ function buildJoinSQL(link, addedTables = new Set()) {
   return `LEFT JOIN "${tTable}" ON "${sTable}"."${sField}" ${rel} "${tTable}"."${tField}"`;
 }
 
-// Generate SQL for ONE FIELD using TABLE + FIELD (bug fix)
+// Generate SQL for ONE FIELD using TABLE + FIELD
 function getSQLForField(tableName, fieldName, returnBoth = false) {
   const tables = currentGraphData.tables || [];
   const links = currentGraphData.links || [];
@@ -616,9 +615,9 @@ document.getElementById('btnExport').addEventListener('click', () => {
   a.href = URL.createObjectURL(new Blob([json], { type: 'application/json' }));
   a.download = 'erd-export.json';
   a.click();
-
-  //console.log('Exported JSON:', exportData);
 });
+
+// Function to test the viewport methods on the graph.paper object
 
 // ----------------------------------
 // Demo / FileMaker
