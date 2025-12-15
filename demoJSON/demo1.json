@@ -1,356 +1,192 @@
 {
-  "tables": [
+  "Order": [
     {
-      "id": "order",
-      "name": "Order",
-      "baseTable": true,
-      "position": {
-        "x": 120,
-        "y": 170
-      },
-      "fields": [
-        {
-          "id": "order_id",
-          "name": "OrderID"
-        },
-        {
-          "id": "customer_id",
-          "name": "CustomerID"
-        },
-        {
-          "id": "vendor_id",
-          "name": "VendorID"
-        },
-        {
-          "id": "order_date",
-          "name": "OrderDate"
-        },
-        {
-          "id": "total_amount",
-          "name": "TotalAmount"
-        }
-      ]
+      "fieldName": "VendorID_t",
+      "fieldId": "7A0F6FD2-4247-3C4E-9798-FDD476DC321B",
+      "sql": "SELECT \"Order\".\"VendorID_t\" FROM \"Order\"",
+      "joinLevel": 0
     },
     {
-      "id": "customer",
-      "name": "Customer",
-      "baseTable": false,
-      "position": {
-        "x": 660,
-        "y": 630
-      },
-      "fields": [
-        {
-          "id": "id",
-          "name": "ID"
-        },
-        {
-          "id": "name",
-          "name": "Name"
-        },
-        {
-          "id": "email",
-          "name": "Email"
-        },
-        {
-          "id": "phone",
-          "name": "Phone"
-        }
-      ]
+      "fieldName": "CustomerID_t",
+      "fieldId": "D38AEB11-F9BC-6947-8E3C-EED1A36F299E",
+      "sql": "SELECT \"Order\".\"CustomerID_t\" FROM \"Order\"",
+      "joinLevel": 0
     },
     {
-      "id": "address_customer",
-      "name": "Address_Customer",
-      "baseTable": false,
-      "position": {
-        "x": 1430,
-        "y": 600
-      },
-      "fields": [
-        {
-          "id": "id",
-          "name": "ID"
-        },
-        {
-          "id": "customer_id",
-          "name": "CustomerID"
-        },
-        {
-          "id": "street",
-          "name": "Street"
-        },
-        {
-          "id": "city",
-          "name": "City"
-        },
-        {
-          "id": "zipcode",
-          "name": "ZipCode"
-        }
-      ]
+      "fieldName": "OrderID_t",
+      "fieldId": "F7679CFC-F9E5-F24A-B160-86CE8FC218E6",
+      "sql": "SELECT \"Order\".\"OrderID_t\" FROM \"Order\"",
+      "joinLevel": 0
     },
     {
-      "id": "vendor",
-      "name": "Vendor",
-      "baseTable": false,
-      "position": {
-        "x": 650,
-        "y": 450
-      },
-      "fields": [
-        {
-          "id": "id",
-          "name": "ID"
-        },
-        {
-          "id": "name",
-          "name": "Name"
-        },
-        {
-          "id": "contact",
-          "name": "Contact"
-        }
-      ]
+      "fieldName": "PaymentStatus_t",
+      "fieldId": "91916619-4EDE-104D-AC12-F1F862B588C3",
+      "sql": "SELECT \"Order\".\"PaymentStatus_t\" FROM \"Order\"",
+      "joinLevel": 0
     },
     {
-      "id": "address_vendor",
-      "name": "Address_Vendor",
-      "baseTable": false,
-      "position": {
-        "x": 1430,
-        "y": 410
-      },
-      "fields": [
-        {
-          "id": "id",
-          "name": "ID"
-        },
-        {
-          "id": "vendor_id",
-          "name": "VendorID"
-        },
-        {
-          "id": "street",
-          "name": "Street"
-        },
-        {
-          "id": "city",
-          "name": "City"
-        }
-      ]
+      "fieldName": "TotalAmount_n",
+      "fieldId": "93AC43BC-3507-4042-9B98-7842BBAB5961",
+      "sql": "SELECT \"Order\".\"TotalAmount_n\" FROM \"Order\"",
+      "joinLevel": 0
     },
     {
-      "id": "product",
-      "name": "Product",
-      "baseTable": false,
-      "position": {
-        "x": 1430,
-        "y": 190
-      },
-      "fields": [
-        {
-          "id": "product_id",
-          "name": "ProductID"
-        },
-        {
-          "id": "name",
-          "name": "Name"
-        },
-        {
-          "id": "vendor_id",
-          "name": "VendorID"
-        },
-        {
-          "id": "price",
-          "name": "Price"
-        }
-      ]
+      "fieldName": "RecePaidTotalAmount",
+      "fieldId": "78781947-82DB-4547-9162-D2D2BDB2BD29",
+      "sql": "SELECT \"Order\".\"RecePaidTotalAmount\" FROM \"Order\"",
+      "joinLevel": 0
     },
     {
-      "id": "order_item",
-      "name": "Order_Item",
-      "baseTable": false,
-      "position": {
-        "x": 640,
-        "y": 230
-      },
-      "fields": [
-        {
-          "id": "id",
-          "name": "ID"
-        },
-        {
-          "id": "order_id",
-          "name": "OrderID"
-        },
-        {
-          "id": "product_id",
-          "name": "ProductID"
-        },
-        {
-          "id": "quantity",
-          "name": "Quantity"
-        }
-      ]
+      "fieldName": "PaidAmount_n",
+      "fieldId": "80CF8A1D-8CD1-5E4B-A3B5-0C9092442DD7",
+      "sql": "SELECT \"Order\".\"PaidAmount_n\" FROM \"Order\"",
+      "joinLevel": 0
     },
     {
-      "id": "shipment",
-      "name": "Shipment",
-      "baseTable": false,
-      "position": {
-        "x": 630,
-        "y": -210
-      },
-      "fields": [
-        {
-          "id": "shipment_id",
-          "name": "ShipmentID"
-        },
-        {
-          "id": "order_id",
-          "name": "OrderID"
-        },
-        {
-          "id": "shipment_date",
-          "name": "ShipmentDate"
-        },
-        {
-          "id": "status",
-          "name": "Status"
-        }
-      ]
-    },
-    {
-      "id": "payment",
-      "name": "Payment",
-      "baseTable": false,
-      "position": {
-        "x": 620,
-        "y": 0
-      },
-      "fields": [
-        {
-          "id": "payment_id",
-          "name": "PaymentID"
-        },
-        {
-          "id": "order_id",
-          "name": "OrderID"
-        },
-        {
-          "id": "amount",
-          "name": "Amount"
-        },
-        {
-          "id": "payment_date",
-          "name": "PaymentDate"
-        },
-        {
-          "id": "payment_method",
-          "name": "PaymentMethod"
-        }
-      ]
+      "fieldName": "DueAmount_n",
+      "fieldId": "A867B34C-C4A7-1D4E-BFD5-3CDA46854463",
+      "sql": "SELECT \"Order\".\"DueAmount_n\" FROM \"Order\"",
+      "joinLevel": 0
     }
   ],
-  "links": [
+  "Vendor": [
     {
-      "id": "e_konff1t",
-      "source": {
-        "table": "order",
-        "field": "customer_id"
-      },
-      "target": {
-        "table": "customer",
-        "field": "id"
-      }
+      "fieldName": "VendorID_t",
+      "fieldId": "9F303315-7BB0-9649-94E3-061A699DDADE",
+      "sql": "SELECT \"Vendor\".\"VendorID_t\" FROM \"Order\" LEFT JOIN \"Vendor\" ON \"Order\".\"VendorID_t\" = \"Vendor\".\"VendorID_t\"",
+      "joinLevel": 1
     },
     {
-      "id": "e_bvdi60d",
-      "source": {
-        "table": "customer",
-        "field": "id"
-      },
-      "target": {
-        "table": "address_customer",
-        "field": "customer_id"
-      }
+      "fieldName": "VendorAddressID_t",
+      "fieldId": "53A2EABB-2B99-264B-8672-8A6B488F90DF",
+      "sql": "SELECT \"Vendor\".\"VendorAddressID_t\" FROM \"Order\" LEFT JOIN \"Vendor\" ON \"Order\".\"VendorID_t\" = \"Vendor\".\"VendorID_t\"",
+      "joinLevel": 1
     },
     {
-      "id": "e_q8l6126",
-      "source": {
-        "table": "order",
-        "field": "vendor_id"
-      },
-      "target": {
-        "table": "vendor",
-        "field": "id"
-      }
+      "fieldName": "VendorName_t",
+      "fieldId": "2DE6C498-9E47-0C47-A0AB-3B53A5CA32D1",
+      "sql": "SELECT \"Vendor\".\"VendorName_t\" FROM \"Order\" LEFT JOIN \"Vendor\" ON \"Order\".\"VendorID_t\" = \"Vendor\".\"VendorID_t\"",
+      "joinLevel": 1
     },
     {
-      "id": "e_wxjg53h",
-      "source": {
-        "table": "vendor",
-        "field": "id"
-      },
-      "target": {
-        "table": "address_vendor",
-        "field": "vendor_id"
-      }
+      "fieldName": "VendorEmail_t",
+      "fieldId": "9ED25922-900E-CB4A-BC2F-AA1A30486FA2",
+      "sql": "SELECT \"Vendor\".\"VendorEmail_t\" FROM \"Order\" LEFT JOIN \"Vendor\" ON \"Order\".\"VendorID_t\" = \"Vendor\".\"VendorID_t\"",
+      "joinLevel": 1
     },
     {
-      "id": "e_product_vendor",
-      "source": {
-        "table": "product",
-        "field": "vendor_id"
-      },
-      "target": {
-        "table": "vendor",
-        "field": "id"
-      }
+      "fieldName": "MobileNo_t",
+      "fieldId": "F8B937BA-431B-2B4C-8176-266642EFC316",
+      "sql": "SELECT \"Vendor\".\"MobileNo_t\" FROM \"Order\" LEFT JOIN \"Vendor\" ON \"Order\".\"VendorID_t\" = \"Vendor\".\"VendorID_t\"",
+      "joinLevel": 1
+    }
+  ],
+  "Customer": [
+    {
+      "fieldName": "Customer_ID",
+      "fieldId": "8AB620E1-7C7C-9444-AB9D-B55A51A66C6E",
+      "sql": "SELECT \"Customer\".\"Customer_ID\" FROM \"Order\" LEFT JOIN \"Customer\" ON \"Order\".\"CustomerID_t\" = \"Customer\".\"Customer_ID\"",
+      "joinLevel": 1
     },
     {
-      "id": "e_orderitem_product",
-      "source": {
-        "table": "order_item",
-        "field": "product_id"
-      },
-      "target": {
-        "table": "product",
-        "field": "product_id"
-      }
+      "fieldName": "CustomerAddressID_t",
+      "fieldId": "25E013EB-363B-8A49-8F13-E063037B6E6F",
+      "sql": "SELECT \"Customer\".\"CustomerAddressID_t\" FROM \"Order\" LEFT JOIN \"Customer\" ON \"Order\".\"CustomerID_t\" = \"Customer\".\"Customer_ID\"",
+      "joinLevel": 1
     },
     {
-      "id": "cdcb4ca8-2051-491c-b1ec-dd70a077b574",
-      "source": {
-        "table": "order",
-        "field": "order_id"
-      },
-      "target": {
-        "table": "shipment",
-        "field": "order_id"
-      }
+      "fieldName": "CustomerName_t",
+      "fieldId": "E6ED4986-C545-9C46-B5A5-784307EE9BBD",
+      "sql": "SELECT \"Customer\".\"CustomerName_t\" FROM \"Order\" LEFT JOIN \"Customer\" ON \"Order\".\"CustomerID_t\" = \"Customer\".\"Customer_ID\"",
+      "joinLevel": 1
     },
     {
-      "id": "e6ad57b2-6295-404b-97ac-19903b789288",
-      "source": {
-        "table": "order",
-        "field": "order_id"
-      },
-      "target": {
-        "table": "order_item",
-        "field": "order_id"
-      }
+      "fieldName": "CustomerEmail_t",
+      "fieldId": "3173FB22-DA42-7648-8548-7BBA11365AE1",
+      "sql": "SELECT \"Customer\".\"CustomerEmail_t\" FROM \"Order\" LEFT JOIN \"Customer\" ON \"Order\".\"CustomerID_t\" = \"Customer\".\"Customer_ID\"",
+      "joinLevel": 1
     },
     {
-      "id": "f1ba0faa-e7ef-408c-9ba5-e40e22c5f42a",
-      "source": {
-        "table": "order",
-        "field": "order_id"
-      },
-      "target": {
-        "table": "payment",
-        "field": "order_id"
-      }
+      "fieldName": "CustomerRating_n",
+      "fieldId": "74EAA607-6DEC-0240-80B9-77B97C3D6FCD",
+      "sql": "SELECT \"Customer\".\"CustomerRating_n\" FROM \"Order\" LEFT JOIN \"Customer\" ON \"Order\".\"CustomerID_t\" = \"Customer\".\"Customer_ID\"",
+      "joinLevel": 1
+    },
+    {
+      "fieldName": "CustomerNote_t",
+      "fieldId": "DAF43CF6-AC49-FB4F-B473-AE46FAD53059",
+      "sql": "SELECT \"Customer\".\"CustomerNote_t\" FROM \"Order\" LEFT JOIN \"Customer\" ON \"Order\".\"CustomerID_t\" = \"Customer\".\"Customer_ID\"",
+      "joinLevel": 1
+    },
+    {
+      "fieldName": "CustomerMobile_t",
+      "fieldId": "83BBBDAC-A109-2945-A1F6-E7F9B31A425F",
+      "sql": "SELECT \"Customer\".\"CustomerMobile_t\" FROM \"Order\" LEFT JOIN \"Customer\" ON \"Order\".\"CustomerID_t\" = \"Customer\".\"Customer_ID\"",
+      "joinLevel": 1
+    }
+  ],
+  "VendorAddress": [
+    {
+      "fieldName": "VendorID_Add_t",
+      "fieldId": "BE952112-99B5-6345-985A-4481B63FA020",
+      "sql": "SELECT \"VendorAddress\".\"VendorID_Add_t\" FROM \"Order\" LEFT JOIN \"Vendor\" ON \"Order\".\"VendorID_t\" = \"Vendor\".\"VendorID_t\" LEFT JOIN \"VendorAddress\" ON \"Vendor\".\"VendorAddressID_t\" = \"VendorAddress\".\"VendorID_Add_t\"",
+      "joinLevel": 2
+    },
+    {
+      "fieldName": "VendorCountryName_t",
+      "fieldId": "BBB54156-EB1F-2142-B717-6E5DD8143335",
+      "sql": "SELECT \"VendorAddress\".\"VendorCountryName_t\" FROM \"Order\" LEFT JOIN \"Vendor\" ON \"Order\".\"VendorID_t\" = \"Vendor\".\"VendorID_t\" LEFT JOIN \"VendorAddress\" ON \"Vendor\".\"VendorAddressID_t\" = \"VendorAddress\".\"VendorID_Add_t\"",
+      "joinLevel": 2
+    },
+    {
+      "fieldName": "VendorCountryID_t",
+      "fieldId": "AA75543E-EEB5-B34F-A4D5-2135FBDC57EF",
+      "sql": "SELECT \"VendorAddress\".\"VendorCountryID_t\" FROM \"Order\" LEFT JOIN \"Vendor\" ON \"Order\".\"VendorID_t\" = \"Vendor\".\"VendorID_t\" LEFT JOIN \"VendorAddress\" ON \"Vendor\".\"VendorAddressID_t\" = \"VendorAddress\".\"VendorID_Add_t\"",
+      "joinLevel": 2
+    },
+    {
+      "fieldName": "VendorDistrict_t",
+      "fieldId": "258C46AD-CAA7-7E44-8896-56700C2615D7",
+      "sql": "SELECT \"VendorAddress\".\"VendorDistrict_t\" FROM \"Order\" LEFT JOIN \"Vendor\" ON \"Order\".\"VendorID_t\" = \"Vendor\".\"VendorID_t\" LEFT JOIN \"VendorAddress\" ON \"Vendor\".\"VendorAddressID_t\" = \"VendorAddress\".\"VendorID_Add_t\"",
+      "joinLevel": 2
+    },
+    {
+      "fieldName": "VendorPinCode_t",
+      "fieldId": "61931C14-C682-E745-B784-B0B03008698B",
+      "sql": "SELECT \"VendorAddress\".\"VendorPinCode_t\" FROM \"Order\" LEFT JOIN \"Vendor\" ON \"Order\".\"VendorID_t\" = \"Vendor\".\"VendorID_t\" LEFT JOIN \"VendorAddress\" ON \"Vendor\".\"VendorAddressID_t\" = \"VendorAddress\".\"VendorID_Add_t\"",
+      "joinLevel": 2
+    }
+  ],
+  "CustomerAddress": [
+    {
+      "fieldName": "CutomerID_Add_t",
+      "fieldId": "713E969F-7C00-5040-9D9B-9C021D746BFB",
+      "sql": "SELECT \"CustomerAddress\".\"CutomerID_Add_t\" FROM \"Order\" LEFT JOIN \"Customer\" ON \"Order\".\"CustomerID_t\" = \"Customer\".\"Customer_ID\" LEFT JOIN \"CustomerAddress\" ON \"Customer\".\"CustomerAddressID_t\" = \"CustomerAddress\".\"CutomerID_Add_t\"",
+      "joinLevel": 2
+    },
+    {
+      "fieldName": "CutomerCountryName_t",
+      "fieldId": "7546696C-D5F3-5C44-A49F-1C1653991E08",
+      "sql": "SELECT \"CustomerAddress\".\"CutomerCountryName_t\" FROM \"Order\" LEFT JOIN \"Customer\" ON \"Order\".\"CustomerID_t\" = \"Customer\".\"Customer_ID\" LEFT JOIN \"CustomerAddress\" ON \"Customer\".\"CustomerAddressID_t\" = \"CustomerAddress\".\"CutomerID_Add_t\"",
+      "joinLevel": 2
+    },
+    {
+      "fieldName": "CustomerCountryID_t",
+      "fieldId": "70BFFA05-2213-9C46-A00A-28CCD25D1F21",
+      "sql": "SELECT \"CustomerAddress\".\"CustomerCountryID_t\" FROM \"Order\" LEFT JOIN \"Customer\" ON \"Order\".\"CustomerID_t\" = \"Customer\".\"Customer_ID\" LEFT JOIN \"CustomerAddress\" ON \"Customer\".\"CustomerAddressID_t\" = \"CustomerAddress\".\"CutomerID_Add_t\"",
+      "joinLevel": 2
+    },
+    {
+      "fieldName": "CustomerDistrict_t",
+      "fieldId": "2DFF58CE-09F6-544E-BAC6-48A4568324F9",
+      "sql": "SELECT \"CustomerAddress\".\"CustomerDistrict_t\" FROM \"Order\" LEFT JOIN \"Customer\" ON \"Order\".\"CustomerID_t\" = \"Customer\".\"Customer_ID\" LEFT JOIN \"CustomerAddress\" ON \"Customer\".\"CustomerAddressID_t\" = \"CustomerAddress\".\"CutomerID_Add_t\"",
+      "joinLevel": 2
+    },
+    {
+      "fieldName": "CustomerPinCode_t",
+      "fieldId": "5A98BD75-60B2-6541-B777-736C9EF3F4A9",
+      "sql": "SELECT \"CustomerAddress\".\"CustomerPinCode_t\" FROM \"Order\" LEFT JOIN \"Customer\" ON \"Order\".\"CustomerID_t\" = \"Customer\".\"Customer_ID\" LEFT JOIN \"CustomerAddress\" ON \"Customer\".\"CustomerAddressID_t\" = \"CustomerAddress\".\"CutomerID_Add_t\"",
+      "joinLevel": 2
     }
   ]
 }
