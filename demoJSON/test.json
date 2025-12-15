@@ -1,1173 +1,230 @@
 {
-  "cells": [
+  "tables": [
     {
+      "fields": [
+        {
+          "id": "BE952112-99B5-6345-985A-4481B63FA020",
+          "name": "VendorID_Add_t"
+        },
+        {
+          "id": "BBB54156-EB1F-2142-B717-6E5DD8143335",
+          "name": "VendorCountryName_t"
+        },
+        {
+          "id": "AA75543E-EEB5-B34F-A4D5-2135FBDC57EF",
+          "name": "VendorCountryID_t"
+        },
+        {
+          "id": "258C46AD-CAA7-7E44-8896-56700C2615D7",
+          "name": "VendorDistrict_t"
+        },
+        {
+          "id": "61931C14-C682-E745-B784-B0B03008698B",
+          "name": "VendorPinCode_t"
+        }
+      ],
+      "id": "307CF283-A07B-8248-9263-809FB3B08DCD",
+      "name": "VendorAddress",
       "position": {
-        "x": -110,
-        "y": 180
+        "x": 100,
+        "y": 50
       },
-      "size": {
-        "width": 260,
-        "height": 340
-      },
-      "visible": true,
-      "view": "html-view",
-      "shape": "html",
-      "id": "F69E020B-40BA-3546-8CB7-386BD175DDD3",
-
-      "data": {
-        "fields": [
-          {
-            "id": "7A0F6FD2-4247-3C4E-9798-FDD476DC321B",
-            "name": "VendorID_t"
-          },
-          {
-            "id": "D38AEB11-F9BC-6947-8E3C-EED1A36F299E",
-            "name": "CustomerID_t"
-          },
-          {
-            "id": "F7679CFC-F9E5-F24A-B160-86CE8FC218E6",
-            "name": "OrderID_t"
-          },
-          {
-            "id": "91916619-4EDE-104D-AC12-F1F862B588C3",
-            "name": "PaymentStatus_t"
-          },
-          {
-            "id": "93AC43BC-3507-4042-9B98-7842BBAB5961",
-            "name": "TotalAmount_n"
-          },
-          {
-            "id": "78781947-82DB-4547-9162-D2D2BDB2BD29",
-            "name": "RecePaidTotalAmount"
-          },
-          {
-            "id": "80CF8A1D-8CD1-5E4B-A3B5-0C9092442DD7",
-            "name": "PaidAmount_n"
-          },
-          {
-            "id": "A867B34C-C4A7-1D4E-BFD5-3CDA46854463",
-            "name": "DueAmount_n"
-          }
-        ],
-        "id": "F69E020B-40BA-3546-8CB7-386BD175DDD3",
-        "name": "Order",
-        "position": {
-          "x": -110,
-          "y": 180
-        },
-        "baseTable": true
-      },
-      "ports": {
-        "groups": {
-          "left": {
-            "position": {
-              "name": "absolute",
-              "args": {
-                "x": 0
-              }
-            },
-            "attrs": {
-              "circle": {
-                "magnet": "passive",
-                "r": 6,
-                "stroke": "#0e7490",
-                "fill": "#fff"
-              }
-            }
-          },
-          "right": {
-            "position": {
-              "name": "absolute",
-              "args": {
-                "x": 260
-              }
-            },
-            "attrs": {
-              "circle": {
-                "magnet": true,
-                "r": 6,
-                "stroke": "#0e7490",
-                "fill": "#fff"
-              }
-            }
-          }
-        },
-        "items": [
-          {
-            "id": "F69E020B-40BA-3546-8CB7-386BD175DDD3.R.7A0F6FD2-4247-3C4E-9798-FDD476DC321B",
-            "group": "right",
-            "args": {
-              "y": 52
-            }
-          },
-          {
-            "id": "F69E020B-40BA-3546-8CB7-386BD175DDD3.R.D38AEB11-F9BC-6947-8E3C-EED1A36F299E",
-            "group": "right",
-            "args": {
-              "y": 74
-            }
-          },
-          {
-            "id": "F69E020B-40BA-3546-8CB7-386BD175DDD3.R.F7679CFC-F9E5-F24A-B160-86CE8FC218E6",
-            "group": "right",
-            "args": {
-              "y": 96
-            }
-          },
-          {
-            "id": "F69E020B-40BA-3546-8CB7-386BD175DDD3.R.91916619-4EDE-104D-AC12-F1F862B588C3",
-            "group": "right",
-            "args": {
-              "y": 118
-            }
-          },
-          {
-            "id": "F69E020B-40BA-3546-8CB7-386BD175DDD3.R.93AC43BC-3507-4042-9B98-7842BBAB5961",
-            "group": "right",
-            "args": {
-              "y": 140
-            }
-          },
-          {
-            "id": "F69E020B-40BA-3546-8CB7-386BD175DDD3.R.78781947-82DB-4547-9162-D2D2BDB2BD29",
-            "group": "right",
-            "args": {
-              "y": 162
-            }
-          },
-          {
-            "id": "F69E020B-40BA-3546-8CB7-386BD175DDD3.R.80CF8A1D-8CD1-5E4B-A3B5-0C9092442DD7",
-            "group": "right",
-            "args": {
-              "y": 184
-            }
-          },
-          {
-            "id": "F69E020B-40BA-3546-8CB7-386BD175DDD3.R.A867B34C-C4A7-1D4E-BFD5-3CDA46854463",
-            "group": "right",
-            "args": {
-              "y": 206
-            }
-          }
-        ]
-      },
-      "zIndex": 1
+      "baseTable": false
     },
     {
-      "position": {
-        "x": 360,
-        "y": 260
-      },
-      "size": {
-        "width": 260,
-        "height": 304
-      },
-      "visible": true,
-      "view": "html-view",
-      "shape": "html",
-      "id": "904E8AD1-2FCB-444A-BBBC-2C4EA0F5EF9C",
-
-      "data": {
-        "fields": [
-          {
-            "id": "8AB620E1-7C7C-9444-AB9D-B55A51A66C6E",
-            "name": "Customer_ID"
-          },
-          {
-            "id": "25E013EB-363B-8A49-8F13-E063037B6E6F",
-            "name": "CustomerAddressID_t"
-          },
-          {
-            "id": "E6ED4986-C545-9C46-B5A5-784307EE9BBD",
-            "name": "CustomerName_t"
-          },
-          {
-            "id": "3173FB22-DA42-7648-8548-7BBA11365AE1",
-            "name": "CustomerEmail_t"
-          },
-          {
-            "id": "74EAA607-6DEC-0240-80B9-77B97C3D6FCD",
-            "name": "CustomerRating_n"
-          },
-          {
-            "id": "DAF43CF6-AC49-FB4F-B473-AE46FAD53059",
-            "name": "CustomerNote_t"
-          },
-          {
-            "id": "83BBBDAC-A109-2945-A1F6-E7F9B31A425F",
-            "name": "CustomerMobile_t"
-          }
-        ],
-        "id": "904E8AD1-2FCB-444A-BBBC-2C4EA0F5EF9C",
-        "name": "Customer",
-        "position": {
-          "x": 360,
-          "y": 260
+      "fields": [
+        {
+          "id": "9F303315-7BB0-9649-94E3-061A699DDADE",
+          "name": "VendorID_t"
         },
-        "baseTable": false
-      },
-      "ports": {
-        "groups": {
-          "left": {
-            "position": {
-              "name": "absolute",
-              "args": {
-                "x": 0
-              }
-            },
-            "attrs": {
-              "circle": {
-                "magnet": "passive",
-                "r": 6,
-                "stroke": "#0e7490",
-                "fill": "#fff"
-              }
-            }
-          },
-          "right": {
-            "position": {
-              "name": "absolute",
-              "args": {
-                "x": 260
-              }
-            },
-            "attrs": {
-              "circle": {
-                "magnet": true,
-                "r": 6,
-                "stroke": "#0e7490",
-                "fill": "#fff"
-              }
-            }
-          }
+        {
+          "id": "2DE6C498-9E47-0C47-A0AB-3B53A5CA32D1",
+          "name": "VendorName_t"
         },
-        "items": [
-          {
-            "id": "904E8AD1-2FCB-444A-BBBC-2C4EA0F5EF9C.L.8AB620E1-7C7C-9444-AB9D-B55A51A66C6E",
-            "group": "left",
-            "args": {
-              "y": 52
-            }
-          },
-          {
-            "id": "904E8AD1-2FCB-444A-BBBC-2C4EA0F5EF9C.R.8AB620E1-7C7C-9444-AB9D-B55A51A66C6E",
-            "group": "right",
-            "args": {
-              "y": 52
-            }
-          },
-          {
-            "id": "904E8AD1-2FCB-444A-BBBC-2C4EA0F5EF9C.L.25E013EB-363B-8A49-8F13-E063037B6E6F",
-            "group": "left",
-            "args": {
-              "y": 74
-            }
-          },
-          {
-            "id": "904E8AD1-2FCB-444A-BBBC-2C4EA0F5EF9C.R.25E013EB-363B-8A49-8F13-E063037B6E6F",
-            "group": "right",
-            "args": {
-              "y": 74
-            }
-          },
-          {
-            "id": "904E8AD1-2FCB-444A-BBBC-2C4EA0F5EF9C.L.E6ED4986-C545-9C46-B5A5-784307EE9BBD",
-            "group": "left",
-            "args": {
-              "y": 96
-            }
-          },
-          {
-            "id": "904E8AD1-2FCB-444A-BBBC-2C4EA0F5EF9C.R.E6ED4986-C545-9C46-B5A5-784307EE9BBD",
-            "group": "right",
-            "args": {
-              "y": 96
-            }
-          },
-          {
-            "id": "904E8AD1-2FCB-444A-BBBC-2C4EA0F5EF9C.L.3173FB22-DA42-7648-8548-7BBA11365AE1",
-            "group": "left",
-            "args": {
-              "y": 118
-            }
-          },
-          {
-            "id": "904E8AD1-2FCB-444A-BBBC-2C4EA0F5EF9C.R.3173FB22-DA42-7648-8548-7BBA11365AE1",
-            "group": "right",
-            "args": {
-              "y": 118
-            }
-          },
-          {
-            "id": "904E8AD1-2FCB-444A-BBBC-2C4EA0F5EF9C.L.74EAA607-6DEC-0240-80B9-77B97C3D6FCD",
-            "group": "left",
-            "args": {
-              "y": 140
-            }
-          },
-          {
-            "id": "904E8AD1-2FCB-444A-BBBC-2C4EA0F5EF9C.R.74EAA607-6DEC-0240-80B9-77B97C3D6FCD",
-            "group": "right",
-            "args": {
-              "y": 140
-            }
-          },
-          {
-            "id": "904E8AD1-2FCB-444A-BBBC-2C4EA0F5EF9C.L.DAF43CF6-AC49-FB4F-B473-AE46FAD53059",
-            "group": "left",
-            "args": {
-              "y": 162
-            }
-          },
-          {
-            "id": "904E8AD1-2FCB-444A-BBBC-2C4EA0F5EF9C.R.DAF43CF6-AC49-FB4F-B473-AE46FAD53059",
-            "group": "right",
-            "args": {
-              "y": 162
-            }
-          },
-          {
-            "id": "904E8AD1-2FCB-444A-BBBC-2C4EA0F5EF9C.L.83BBBDAC-A109-2945-A1F6-E7F9B31A425F",
-            "group": "left",
-            "args": {
-              "y": 184
-            }
-          },
-          {
-            "id": "904E8AD1-2FCB-444A-BBBC-2C4EA0F5EF9C.R.83BBBDAC-A109-2945-A1F6-E7F9B31A425F",
-            "group": "right",
-            "args": {
-              "y": 184
-            }
-          }
-        ]
-      },
-      "zIndex": 2
-    },
-    {
-      "position": {
-        "x": 370,
-        "y": 20
-      },
-      "size": {
-        "width": 260,
-        "height": 232
-      },
-      "visible": true,
-      "view": "html-view",
-      "shape": "html",
+        {
+          "id": "9ED25922-900E-CB4A-BC2F-AA1A30486FA2",
+          "name": "VendorEmail_t"
+        },
+        {
+          "id": "F8B937BA-431B-2B4C-8176-266642EFC316",
+          "name": "MobileNo_t"
+        },
+        {
+          "id": "53A2EABB-2B99-264B-8672-8A6B488F90DF",
+          "name": "VendorAddressID_t"
+        }
+      ],
       "id": "76CD1D67-4E3D-584B-BBE2-3DC2AD5F9A0A",
-
-      "data": {
-        "fields": [
-          {
-            "id": "9F303315-7BB0-9649-94E3-061A699DDADE",
-            "name": "VendorID_t"
-          },
-          {
-            "id": "53A2EABB-2B99-264B-8672-8A6B488F90DF",
-            "name": "VendorAddressID_t"
-          },
-          {
-            "id": "2DE6C498-9E47-0C47-A0AB-3B53A5CA32D1",
-            "name": "VendorName_t"
-          },
-          {
-            "id": "9ED25922-900E-CB4A-BC2F-AA1A30486FA2",
-            "name": "VendorEmail_t"
-          },
-          {
-            "id": "F8B937BA-431B-2B4C-8176-266642EFC316",
-            "name": "MobileNo_t"
-          }
-        ],
-        "id": "76CD1D67-4E3D-584B-BBE2-3DC2AD5F9A0A",
-        "name": "Vendor",
-        "position": {
-          "x": 370,
-          "y": 20
-        },
-        "baseTable": false
+      "name": "Vendor",
+      "position": {
+        "x": 150,
+        "y": 100
       },
-      "ports": {
-        "groups": {
-          "left": {
-            "position": {
-              "name": "absolute",
-              "args": {
-                "x": 0
-              }
-            },
-            "attrs": {
-              "circle": {
-                "magnet": "passive",
-                "r": 6,
-                "stroke": "#0e7490",
-                "fill": "#fff"
-              }
-            }
-          },
-          "right": {
-            "position": {
-              "name": "absolute",
-              "args": {
-                "x": 260
-              }
-            },
-            "attrs": {
-              "circle": {
-                "magnet": true,
-                "r": 6,
-                "stroke": "#0e7490",
-                "fill": "#fff"
-              }
-            }
-          }
-        },
-        "items": [
-          {
-            "id": "76CD1D67-4E3D-584B-BBE2-3DC2AD5F9A0A.L.9F303315-7BB0-9649-94E3-061A699DDADE",
-            "group": "left",
-            "args": {
-              "y": 52
-            }
-          },
-          {
-            "id": "76CD1D67-4E3D-584B-BBE2-3DC2AD5F9A0A.R.9F303315-7BB0-9649-94E3-061A699DDADE",
-            "group": "right",
-            "args": {
-              "y": 52
-            }
-          },
-          {
-            "id": "76CD1D67-4E3D-584B-BBE2-3DC2AD5F9A0A.L.53A2EABB-2B99-264B-8672-8A6B488F90DF",
-            "group": "left",
-            "args": {
-              "y": 74
-            }
-          },
-          {
-            "id": "76CD1D67-4E3D-584B-BBE2-3DC2AD5F9A0A.R.53A2EABB-2B99-264B-8672-8A6B488F90DF",
-            "group": "right",
-            "args": {
-              "y": 74
-            }
-          },
-          {
-            "id": "76CD1D67-4E3D-584B-BBE2-3DC2AD5F9A0A.L.2DE6C498-9E47-0C47-A0AB-3B53A5CA32D1",
-            "group": "left",
-            "args": {
-              "y": 96
-            }
-          },
-          {
-            "id": "76CD1D67-4E3D-584B-BBE2-3DC2AD5F9A0A.R.2DE6C498-9E47-0C47-A0AB-3B53A5CA32D1",
-            "group": "right",
-            "args": {
-              "y": 96
-            }
-          },
-          {
-            "id": "76CD1D67-4E3D-584B-BBE2-3DC2AD5F9A0A.L.9ED25922-900E-CB4A-BC2F-AA1A30486FA2",
-            "group": "left",
-            "args": {
-              "y": 118
-            }
-          },
-          {
-            "id": "76CD1D67-4E3D-584B-BBE2-3DC2AD5F9A0A.R.9ED25922-900E-CB4A-BC2F-AA1A30486FA2",
-            "group": "right",
-            "args": {
-              "y": 118
-            }
-          },
-          {
-            "id": "76CD1D67-4E3D-584B-BBE2-3DC2AD5F9A0A.L.F8B937BA-431B-2B4C-8176-266642EFC316",
-            "group": "left",
-            "args": {
-              "y": 140
-            }
-          },
-          {
-            "id": "76CD1D67-4E3D-584B-BBE2-3DC2AD5F9A0A.R.F8B937BA-431B-2B4C-8176-266642EFC316",
-            "group": "right",
-            "args": {
-              "y": 140
-            }
-          }
-        ]
-      },
-      "zIndex": 3
+      "baseTable": false
     },
     {
+      "fields": [
+        {
+          "id": "F7679CFC-F9E5-F24A-B160-86CE8FC218E6",
+          "name": "OrderID_t"
+        },
+        {
+          "id": "91916619-4EDE-104D-AC12-F1F862B588C3",
+          "name": "PaymentStatus_t"
+        },
+        {
+          "id": "93AC43BC-3507-4042-9B98-7842BBAB5961",
+          "name": "TotalAmount_n"
+        },
+        {
+          "id": "D38AEB11-F9BC-6947-8E3C-EED1A36F299E",
+          "name": "CustomerID_t"
+        },
+        {
+          "id": "78781947-82DB-4547-9162-D2D2BDB2BD29",
+          "name": "RecePaidTotalAmount"
+        },
+        {
+          "id": "80CF8A1D-8CD1-5E4B-A3B5-0C9092442DD7",
+          "name": "PaidAmount_n"
+        },
+        {
+          "id": "A867B34C-C4A7-1D4E-BFD5-3CDA46854463",
+          "name": "DueAmount_n"
+        },
+        {
+          "id": "7A0F6FD2-4247-3C4E-9798-FDD476DC321B",
+          "name": "VendorID_t"
+        }
+      ],
+      "id": "F69E020B-40BA-3546-8CB7-386BD175DDD3",
+      "name": "Order",
       "position": {
-        "x": 800,
+        "x": 200,
+        "y": 150
+      },
+      "baseTable": false
+    },
+    {
+      "fields": [
+        {
+          "id": "713E969F-7C00-5040-9D9B-9C021D746BFB",
+          "name": "CutomerID_Add_t"
+        },
+        {
+          "id": "7546696C-D5F3-5C44-A49F-1C1653991E08",
+          "name": "CutomerCountryName_t"
+        },
+        {
+          "id": "70BFFA05-2213-9C46-A00A-28CCD25D1F21",
+          "name": "CustomerCountryID_t"
+        },
+        {
+          "id": "2DFF58CE-09F6-544E-BAC6-48A4568324F9",
+          "name": "CustomerDistrict_t"
+        },
+        {
+          "id": "5A98BD75-60B2-6541-B777-736C9EF3F4A9",
+          "name": "CustomerPinCode_t"
+        }
+      ],
+      "id": "B48FE549-340B-1648-85F4-600FD2CC9C81",
+      "name": "CustomerAddress",
+      "position": {
+        "x": 250,
+        "y": 200
+      },
+      "baseTable": false
+    },
+    {
+      "fields": [
+        {
+          "id": "8AB620E1-7C7C-9444-AB9D-B55A51A66C6E",
+          "name": "Customer_ID"
+        },
+        {
+          "id": "E6ED4986-C545-9C46-B5A5-784307EE9BBD",
+          "name": "CustomerName_t"
+        },
+        {
+          "id": "3173FB22-DA42-7648-8548-7BBA11365AE1",
+          "name": "CustomerEmail_t"
+        },
+        {
+          "id": "74EAA607-6DEC-0240-80B9-77B97C3D6FCD",
+          "name": "CustomerRating_n"
+        },
+        {
+          "id": "DAF43CF6-AC49-FB4F-B473-AE46FAD53059",
+          "name": "CustomerNote_t"
+        },
+        {
+          "id": "83BBBDAC-A109-2945-A1F6-E7F9B31A425F",
+          "name": "CustomerMobile_t"
+        },
+        {
+          "id": "25E013EB-363B-8A49-8F13-E063037B6E6F",
+          "name": "CustomerAddressID_t"
+        }
+      ],
+      "id": "904E8AD1-2FCB-444A-BBBC-2C4EA0F5EF9C",
+      "name": "Customer",
+      "position": {
+        "x": 300,
         "y": 250
       },
-      "size": {
-        "width": 260,
-        "height": 232
-      },
-      "visible": true,
-      "view": "html-view",
-      "shape": "html",
-      "id": "B48FE549-340B-1648-85F4-600FD2CC9C81",
-
-      "data": {
-        "fields": [
-          {
-            "id": "713E969F-7C00-5040-9D9B-9C021D746BFB",
-            "name": "CutomerID_Add_t"
-          },
-          {
-            "id": "7546696C-D5F3-5C44-A49F-1C1653991E08",
-            "name": "CutomerCountryName_t"
-          },
-          {
-            "id": "70BFFA05-2213-9C46-A00A-28CCD25D1F21",
-            "name": "CustomerCountryID_t"
-          },
-          {
-            "id": "2DFF58CE-09F6-544E-BAC6-48A4568324F9",
-            "name": "CustomerDistrict_t"
-          },
-          {
-            "id": "5A98BD75-60B2-6541-B777-736C9EF3F4A9",
-            "name": "CustomerPinCode_t"
-          }
-        ],
-        "id": "B48FE549-340B-1648-85F4-600FD2CC9C81",
-        "name": "CustomerAddress",
-        "position": {
-          "x": 800,
-          "y": 250
-        },
-        "baseTable": false
-      },
-      "ports": {
-        "groups": {
-          "left": {
-            "position": {
-              "name": "absolute",
-              "args": {
-                "x": 0
-              }
-            },
-            "attrs": {
-              "circle": {
-                "magnet": "passive",
-                "r": 6,
-                "stroke": "#0e7490",
-                "fill": "#fff"
-              }
-            }
-          },
-          "right": {
-            "position": {
-              "name": "absolute",
-              "args": {
-                "x": 260
-              }
-            },
-            "attrs": {
-              "circle": {
-                "magnet": true,
-                "r": 6,
-                "stroke": "#0e7490",
-                "fill": "#fff"
-              }
-            }
-          }
-        },
-        "items": [
-          {
-            "id": "B48FE549-340B-1648-85F4-600FD2CC9C81.L.713E969F-7C00-5040-9D9B-9C021D746BFB",
-            "group": "left",
-            "args": {
-              "y": 52
-            }
-          },
-          {
-            "id": "B48FE549-340B-1648-85F4-600FD2CC9C81.R.713E969F-7C00-5040-9D9B-9C021D746BFB",
-            "group": "right",
-            "args": {
-              "y": 52
-            }
-          },
-          {
-            "id": "B48FE549-340B-1648-85F4-600FD2CC9C81.L.7546696C-D5F3-5C44-A49F-1C1653991E08",
-            "group": "left",
-            "args": {
-              "y": 74
-            }
-          },
-          {
-            "id": "B48FE549-340B-1648-85F4-600FD2CC9C81.R.7546696C-D5F3-5C44-A49F-1C1653991E08",
-            "group": "right",
-            "args": {
-              "y": 74
-            }
-          },
-          {
-            "id": "B48FE549-340B-1648-85F4-600FD2CC9C81.L.70BFFA05-2213-9C46-A00A-28CCD25D1F21",
-            "group": "left",
-            "args": {
-              "y": 96
-            }
-          },
-          {
-            "id": "B48FE549-340B-1648-85F4-600FD2CC9C81.R.70BFFA05-2213-9C46-A00A-28CCD25D1F21",
-            "group": "right",
-            "args": {
-              "y": 96
-            }
-          },
-          {
-            "id": "B48FE549-340B-1648-85F4-600FD2CC9C81.L.2DFF58CE-09F6-544E-BAC6-48A4568324F9",
-            "group": "left",
-            "args": {
-              "y": 118
-            }
-          },
-          {
-            "id": "B48FE549-340B-1648-85F4-600FD2CC9C81.R.2DFF58CE-09F6-544E-BAC6-48A4568324F9",
-            "group": "right",
-            "args": {
-              "y": 118
-            }
-          },
-          {
-            "id": "B48FE549-340B-1648-85F4-600FD2CC9C81.L.5A98BD75-60B2-6541-B777-736C9EF3F4A9",
-            "group": "left",
-            "args": {
-              "y": 140
-            }
-          },
-          {
-            "id": "B48FE549-340B-1648-85F4-600FD2CC9C81.R.5A98BD75-60B2-6541-B777-736C9EF3F4A9",
-            "group": "right",
-            "args": {
-              "y": 140
-            }
-          }
-        ]
-      },
-      "zIndex": 4
-    },
+      "baseTable": true
+    }
+  ],
+  "links": [],
+  "sqlMap": [
     {
-      "position": {
-        "x": 790,
-        "y": 20
-      },
-      "size": {
-        "width": 260,
-        "height": 232
-      },
-      "visible": true,
-      "view": "html-view",
-      "shape": "html",
-      "id": "307CF283-A07B-8248-9263-809FB3B08DCD",
-
-      "data": {
-        "fields": [
-          {
-            "id": "BE952112-99B5-6345-985A-4481B63FA020",
-            "name": "VendorID_Add_t"
-          },
-          {
-            "id": "BBB54156-EB1F-2142-B717-6E5DD8143335",
-            "name": "VendorCountryName_t"
-          },
-          {
-            "id": "AA75543E-EEB5-B34F-A4D5-2135FBDC57EF",
-            "name": "VendorCountryID_t"
-          },
-          {
-            "id": "258C46AD-CAA7-7E44-8896-56700C2615D7",
-            "name": "VendorDistrict_t"
-          },
-          {
-            "id": "61931C14-C682-E745-B784-B0B03008698B",
-            "name": "VendorPinCode_t"
-          }
-        ],
-        "id": "307CF283-A07B-8248-9263-809FB3B08DCD",
-        "name": "VendorAddress",
-        "position": {
-          "x": 790,
-          "y": 20
-        },
-        "baseTable": false
-      },
-      "ports": {
-        "groups": {
-          "left": {
-            "position": {
-              "name": "absolute",
-              "args": {
-                "x": 0
-              }
-            },
-            "attrs": {
-              "circle": {
-                "magnet": "passive",
-                "r": 6,
-                "stroke": "#0e7490",
-                "fill": "#fff"
-              }
-            }
-          },
-          "right": {
-            "position": {
-              "name": "absolute",
-              "args": {
-                "x": 260
-              }
-            },
-            "attrs": {
-              "circle": {
-                "magnet": true,
-                "r": 6,
-                "stroke": "#0e7490",
-                "fill": "#fff"
-              }
-            }
-          }
-        },
-        "items": [
-          {
-            "id": "307CF283-A07B-8248-9263-809FB3B08DCD.L.BE952112-99B5-6345-985A-4481B63FA020",
-            "group": "left",
-            "args": {
-              "y": 52
-            }
-          },
-          {
-            "id": "307CF283-A07B-8248-9263-809FB3B08DCD.R.BE952112-99B5-6345-985A-4481B63FA020",
-            "group": "right",
-            "args": {
-              "y": 52
-            }
-          },
-          {
-            "id": "307CF283-A07B-8248-9263-809FB3B08DCD.L.BBB54156-EB1F-2142-B717-6E5DD8143335",
-            "group": "left",
-            "args": {
-              "y": 74
-            }
-          },
-          {
-            "id": "307CF283-A07B-8248-9263-809FB3B08DCD.R.BBB54156-EB1F-2142-B717-6E5DD8143335",
-            "group": "right",
-            "args": {
-              "y": 74
-            }
-          },
-          {
-            "id": "307CF283-A07B-8248-9263-809FB3B08DCD.L.AA75543E-EEB5-B34F-A4D5-2135FBDC57EF",
-            "group": "left",
-            "args": {
-              "y": 96
-            }
-          },
-          {
-            "id": "307CF283-A07B-8248-9263-809FB3B08DCD.R.AA75543E-EEB5-B34F-A4D5-2135FBDC57EF",
-            "group": "right",
-            "args": {
-              "y": 96
-            }
-          },
-          {
-            "id": "307CF283-A07B-8248-9263-809FB3B08DCD.L.258C46AD-CAA7-7E44-8896-56700C2615D7",
-            "group": "left",
-            "args": {
-              "y": 118
-            }
-          },
-          {
-            "id": "307CF283-A07B-8248-9263-809FB3B08DCD.R.258C46AD-CAA7-7E44-8896-56700C2615D7",
-            "group": "right",
-            "args": {
-              "y": 118
-            }
-          },
-          {
-            "id": "307CF283-A07B-8248-9263-809FB3B08DCD.L.61931C14-C682-E745-B784-B0B03008698B",
-            "group": "left",
-            "args": {
-              "y": 140
-            }
-          },
-          {
-            "id": "307CF283-A07B-8248-9263-809FB3B08DCD.R.61931C14-C682-E745-B784-B0B03008698B",
-            "group": "right",
-            "args": {
-              "y": 140
-            }
-          }
-        ]
-      },
-      "zIndex": 5
-    },
-    {
-      "shape": "edge",
-      "attrs": {
-        "line": {
-          "stroke": "#A2B1C3",
-          "targetMarker": {
-            "name": "classic",
-            "size": 8
-          }
-        }
-      },
-      "id": "c5be18e1-1077-43ab-a04d-435ef6137651",
-      "data": {
-        "id": "c5be18e1-1077-43ab-a04d-435ef6137651",
-        "source": "F69E020B-40BA-3546-8CB7-386BD175DDD3.R.7A0F6FD2-4247-3C4E-9798-FDD476DC321B",
-        "target": "76CD1D67-4E3D-584B-BBE2-3DC2AD5F9A0A.L.9F303315-7BB0-9649-94E3-061A699DDADE",
-        "relation": "=",
-        "sourceTableName": "Order",
-        "sourceFieldName": "VendorID_t",
-        "targetTableName": "Vendor",
-        "targetFieldName": "VendorID_t"
-      },
-      "source": {
-        "cell": "F69E020B-40BA-3546-8CB7-386BD175DDD3",
-        "port": "F69E020B-40BA-3546-8CB7-386BD175DDD3.R.7A0F6FD2-4247-3C4E-9798-FDD476DC321B"
-      },
-      "target": {
-        "cell": "76CD1D67-4E3D-584B-BBE2-3DC2AD5F9A0A",
-        "port": "76CD1D67-4E3D-584B-BBE2-3DC2AD5F9A0A.L.9F303315-7BB0-9649-94E3-061A699DDADE"
-      },
-      "zIndex": 6,
-      "labels": [
+      "tableId": "904E8AD1-2FCB-444A-BBBC-2C4EA0F5EF9C",
+      "tableName": "Customer",
+      "fields": [
         {
-          "position": 0.5,
-          "attrs": {
-            "text": {
-              "text": "=",
-              "fill": "#05070eff",
-              "fontSize": 12,
-              "fontWeight": 600,
-              "textAnchor": "middle"
-            },
-            "rect": {
-              "fill": "#f8fafc",
-              "stroke": "#0f4991ff",
-              "rx": 6,
-              "ry": 20,
-              "refWidth": 10,
-              "refHeight": 2,
-              "refX": -5,
-              "refY": -1
-            }
-          }
-        }
-      ],
-      "tools": {
-        "items": [
-          {
-            "name": "button-remove",
-            "args": {
-              "markup": [
-                {
-                  "tagName": "circle",
-                  "attrs": {
-                    "r": 10,
-                    "fill": "#ef4444"
-                  }
-                },
-                {
-                  "tagName": "text",
-                  "textContent": "X",
-                  "attrs": {
-                    "fill": "#fff",
-                    "fontSize": 13,
-                    "textAnchor": "middle",
-                    "dy": "0.4em"
-                  }
-                }
-              ],
-              "distance": 0.6,
-              "offset": {
-                "x": 20,
-                "y": 0
-              }
-            }
-          }
-        ],
-        "name": null
-      }
-    },
-    {
-      "shape": "edge",
-      "attrs": {
-        "line": {
-          "stroke": "#A2B1C3",
-          "targetMarker": {
-            "name": "classic",
-            "size": 8
-          }
-        }
-      },
-      "id": "3160c7a8-daa0-4e0a-85bd-c1331f7bf5b3",
-      "data": {
-        "id": "3160c7a8-daa0-4e0a-85bd-c1331f7bf5b3",
-        "source": "F69E020B-40BA-3546-8CB7-386BD175DDD3.R.D38AEB11-F9BC-6947-8E3C-EED1A36F299E",
-        "target": "904E8AD1-2FCB-444A-BBBC-2C4EA0F5EF9C.L.8AB620E1-7C7C-9444-AB9D-B55A51A66C6E",
-        "relation": "=",
-        "sourceTableName": "Order",
-        "sourceFieldName": "CustomerID_t",
-        "targetTableName": "Customer",
-        "targetFieldName": "Customer_ID"
-      },
-      "source": {
-        "cell": "F69E020B-40BA-3546-8CB7-386BD175DDD3",
-        "port": "F69E020B-40BA-3546-8CB7-386BD175DDD3.R.D38AEB11-F9BC-6947-8E3C-EED1A36F299E"
-      },
-      "target": {
-        "cell": "904E8AD1-2FCB-444A-BBBC-2C4EA0F5EF9C",
-        "port": "904E8AD1-2FCB-444A-BBBC-2C4EA0F5EF9C.L.8AB620E1-7C7C-9444-AB9D-B55A51A66C6E"
-      },
-      "zIndex": 7,
-      "labels": [
+          "fieldId": "8AB620E1-7C7C-9444-AB9D-B55A51A66C6E",
+          "fieldName": "Customer_ID",
+          "sql": "SELECT \"Customer\".\"Customer_ID\" FROM \"Customer\"",
+          "joinLevel": 0
+        },
         {
-          "position": 0.5,
-          "attrs": {
-            "text": {
-              "text": "=",
-              "fill": "#05070eff",
-              "fontSize": 12,
-              "fontWeight": 600,
-              "textAnchor": "middle"
-            },
-            "rect": {
-              "fill": "#f8fafc",
-              "stroke": "#0f4991ff",
-              "rx": 6,
-              "ry": 20,
-              "refWidth": 10,
-              "refHeight": 2,
-              "refX": -5,
-              "refY": -1
-            }
-          }
-        }
-      ],
-      "tools": {
-        "items": [
-          {
-            "name": "button-remove",
-            "args": {
-              "markup": [
-                {
-                  "tagName": "circle",
-                  "attrs": {
-                    "r": 10,
-                    "fill": "#ef4444"
-                  }
-                },
-                {
-                  "tagName": "text",
-                  "textContent": "X",
-                  "attrs": {
-                    "fill": "#fff",
-                    "fontSize": 13,
-                    "textAnchor": "middle",
-                    "dy": "0.4em"
-                  }
-                }
-              ],
-              "distance": 0.6,
-              "offset": {
-                "x": 20,
-                "y": 0
-              }
-            }
-          }
-        ],
-        "name": null
-      }
-    },
-    {
-      "shape": "edge",
-      "attrs": {
-        "line": {
-          "stroke": "#A2B1C3",
-          "targetMarker": {
-            "name": "classic",
-            "size": 8
-          }
-        }
-      },
-      "id": "cf4c5d28-929e-47ae-99b7-94f002f8c33d",
-      "data": {
-        "id": "cf4c5d28-929e-47ae-99b7-94f002f8c33d",
-        "source": "904E8AD1-2FCB-444A-BBBC-2C4EA0F5EF9C.R.25E013EB-363B-8A49-8F13-E063037B6E6F",
-        "target": "B48FE549-340B-1648-85F4-600FD2CC9C81.L.713E969F-7C00-5040-9D9B-9C021D746BFB",
-        "relation": "=",
-        "sourceTableName": "Customer",
-        "sourceFieldName": "CustomerAddressID_t",
-        "targetTableName": "CustomerAddress",
-        "targetFieldName": "CutomerID_Add_t"
-      },
-      "source": {
-        "cell": "904E8AD1-2FCB-444A-BBBC-2C4EA0F5EF9C",
-        "port": "904E8AD1-2FCB-444A-BBBC-2C4EA0F5EF9C.R.25E013EB-363B-8A49-8F13-E063037B6E6F"
-      },
-      "target": {
-        "cell": "B48FE549-340B-1648-85F4-600FD2CC9C81",
-        "port": "B48FE549-340B-1648-85F4-600FD2CC9C81.L.713E969F-7C00-5040-9D9B-9C021D746BFB"
-      },
-      "zIndex": 8,
-      "labels": [
+          "fieldId": "E6ED4986-C545-9C46-B5A5-784307EE9BBD",
+          "fieldName": "CustomerName_t",
+          "sql": "SELECT \"Customer\".\"CustomerName_t\" FROM \"Customer\"",
+          "joinLevel": 0
+        },
         {
-          "position": 0.5,
-          "attrs": {
-            "text": {
-              "text": "=",
-              "fill": "#05070eff",
-              "fontSize": 12,
-              "fontWeight": 600,
-              "textAnchor": "middle"
-            },
-            "rect": {
-              "fill": "#f8fafc",
-              "stroke": "#0f4991ff",
-              "rx": 6,
-              "ry": 20,
-              "refWidth": 10,
-              "refHeight": 2,
-              "refX": -5,
-              "refY": -1
-            }
-          }
-        }
-      ],
-      "tools": {
-        "items": [
-          {
-            "name": "button-remove",
-            "args": {
-              "markup": [
-                {
-                  "tagName": "circle",
-                  "attrs": {
-                    "r": 10,
-                    "fill": "#ef4444"
-                  }
-                },
-                {
-                  "tagName": "text",
-                  "textContent": "X",
-                  "attrs": {
-                    "fill": "#fff",
-                    "fontSize": 13,
-                    "textAnchor": "middle",
-                    "dy": "0.4em"
-                  }
-                }
-              ],
-              "distance": 0.6,
-              "offset": {
-                "x": 20,
-                "y": 0
-              }
-            }
-          }
-        ],
-        "name": null
-      }
-    },
-    {
-      "shape": "edge",
-      "attrs": {
-        "line": {
-          "stroke": "#A2B1C3",
-          "targetMarker": {
-            "name": "classic",
-            "size": 8
-          }
-        }
-      },
-      "id": "9a10addf-9089-4a4e-a7e9-ccf004a052db",
-      "data": {
-        "id": "9a10addf-9089-4a4e-a7e9-ccf004a052db",
-        "source": "76CD1D67-4E3D-584B-BBE2-3DC2AD5F9A0A.R.53A2EABB-2B99-264B-8672-8A6B488F90DF",
-        "target": "307CF283-A07B-8248-9263-809FB3B08DCD.L.BE952112-99B5-6345-985A-4481B63FA020",
-        "relation": "=",
-        "sourceTableName": "Vendor",
-        "sourceFieldName": "VendorAddressID_t",
-        "targetTableName": "VendorAddress",
-        "targetFieldName": "VendorID_Add_t"
-      },
-      "source": {
-        "cell": "76CD1D67-4E3D-584B-BBE2-3DC2AD5F9A0A",
-        "port": "76CD1D67-4E3D-584B-BBE2-3DC2AD5F9A0A.R.53A2EABB-2B99-264B-8672-8A6B488F90DF"
-      },
-      "target": {
-        "cell": "307CF283-A07B-8248-9263-809FB3B08DCD",
-        "port": "307CF283-A07B-8248-9263-809FB3B08DCD.L.BE952112-99B5-6345-985A-4481B63FA020"
-      },
-      "zIndex": 9,
-      "labels": [
+          "fieldId": "3173FB22-DA42-7648-8548-7BBA11365AE1",
+          "fieldName": "CustomerEmail_t",
+          "sql": "SELECT \"Customer\".\"CustomerEmail_t\" FROM \"Customer\"",
+          "joinLevel": 0
+        },
         {
-          "position": 0.5,
-          "attrs": {
-            "text": {
-              "text": "=",
-              "fill": "#05070eff",
-              "fontSize": 12,
-              "fontWeight": 600,
-              "textAnchor": "middle"
-            },
-            "rect": {
-              "fill": "#f8fafc",
-              "stroke": "#0f4991ff",
-              "rx": 6,
-              "ry": 20,
-              "refWidth": 10,
-              "refHeight": 2,
-              "refX": -5,
-              "refY": -1
-            }
-          }
+          "fieldId": "74EAA607-6DEC-0240-80B9-77B97C3D6FCD",
+          "fieldName": "CustomerRating_n",
+          "sql": "SELECT \"Customer\".\"CustomerRating_n\" FROM \"Customer\"",
+          "joinLevel": 0
+        },
+        {
+          "fieldId": "DAF43CF6-AC49-FB4F-B473-AE46FAD53059",
+          "fieldName": "CustomerNote_t",
+          "sql": "SELECT \"Customer\".\"CustomerNote_t\" FROM \"Customer\"",
+          "joinLevel": 0
+        },
+        {
+          "fieldId": "83BBBDAC-A109-2945-A1F6-E7F9B31A425F",
+          "fieldName": "CustomerMobile_t",
+          "sql": "SELECT \"Customer\".\"CustomerMobile_t\" FROM \"Customer\"",
+          "joinLevel": 0
+        },
+        {
+          "fieldId": "25E013EB-363B-8A49-8F13-E063037B6E6F",
+          "fieldName": "CustomerAddressID_t",
+          "sql": "SELECT \"Customer\".\"CustomerAddressID_t\" FROM \"Customer\"",
+          "joinLevel": 0
         }
-      ],
-      "tools": {
-        "items": [
-          {
-            "name": "button-remove",
-            "args": {
-              "markup": [
-                {
-                  "tagName": "circle",
-                  "attrs": {
-                    "r": 10,
-                    "fill": "#ef4444"
-                  }
-                },
-                {
-                  "tagName": "text",
-                  "textContent": "X",
-                  "attrs": {
-                    "fill": "#fff",
-                    "fontSize": 13,
-                    "textAnchor": "middle",
-                    "dy": "0.4em"
-                  }
-                }
-              ],
-              "distance": 0.6,
-              "offset": {
-                "x": 20,
-                "y": 0
-              }
-            }
-          }
-        ],
-        "name": null
-      }
+      ]
     }
   ]
 }

@@ -87,6 +87,10 @@ body {
   background: linear-gradient(90deg, #ffc107, #ff9800);
   color: #000000;
 }
+.base-key {
+  font-weight: bold;
+  color: black;
+}
 
 /* Modal Styles */
 .modal {

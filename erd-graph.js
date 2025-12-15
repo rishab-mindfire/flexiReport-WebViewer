@@ -68,16 +68,20 @@ function buildTableHtml(table) {
       <div class="er-header">${table.name}</div>
       <div class="er-fields-container">
         ${(table.fields || [])
-          .map(
-            (f) =>
-              `<div class="er-field" data-name="${f.id || f.name}">${
-                f.name
-              }</div>`
-          )
+          .map((f) => {
+            const isBaseKey =
+              table.baseTableKey && f.name === table.baseTableKey;
+            return `<div class="er-field ${
+              isBaseKey ? 'base-key' : ''
+            }" data-name="${f.id || f.name}">
+                      ${f.name}
+                    </div>`;
+          })
           .join('')}
       </div>
     </div>`;
 }
+
 // ----------------------------------
 // Track Node Positions
 // ----------------------------------
@@ -459,135 +463,87 @@ function loadGraphData(data) {
   });
 }
 // ----------------------------------
-// SQL Generation with joinLevel
+// SQL Generation buildSqlMap()
 // ----------------------------------
-// Build LEFT JOIN clause from a link
-function buildJoinSQL(link, addedTables = new Set()) {
-  if (!link) return '';
-  const sTable = link.sourceTableName;
-  const sField = link.sourceFieldName;
-  const tTable = link.targetTableName;
-  const tField = link.targetFieldName;
-  const rel = link.relation || '=';
+function buildSqlMap() {
+  const { tables, links } = currentGraphData;
+  if (!tables || !tables.length) return [];
 
-  if (!sTable || !tTable) return '';
+  const sqlMap = [];
 
-  // Avoid duplicate joins
-  if (addedTables.has(tTable)) return '';
-  addedTables.add(tTable);
+  const baseTable = tables.find((t) => t.baseTable);
+  if (!baseTable || !baseTable.baseTableKey) return sqlMap;
 
-  return `LEFT JOIN "${tTable}" ON "${sTable}"."${sField}" ${rel} "${tTable}"."${tField}"`;
-}
+  const baseTableName = baseTable.name;
+  const baseTableKey = baseTable.baseTableKey;
 
-// Generate SQL for ONE FIELD using TABLE + FIELD
-function getSQLForField(tableName, fieldName, returnBoth = false) {
-  const tables = currentGraphData.tables || [];
-  const links = currentGraphData.links || [];
-
-  const targetTableObj = tables.find((t) => t.name === tableName);
-  if (!targetTableObj) return returnBoth ? { sql: '', joinLevel: 0 } : '';
-
-  const baseTableObj = tables.find((t) => t.baseTable);
-  if (!baseTableObj) return returnBoth ? { sql: '', joinLevel: 0 } : '';
-
-  const baseTable = baseTableObj.name;
-  const targetTable = targetTableObj.name;
-
-  // BFS shortest path
-  const visited = new Set([baseTable]);
-  const queue = [{ table: baseTable, path: [] }];
-  let finalPath = [];
-
-  while (queue.length) {
-    const { table, path } = queue.shift();
-
-    if (table === targetTable) {
-      finalPath = path;
-      break;
-    }
-
-    links.forEach((l) => {
-      const s = l.sourceTableName;
-      const t = l.targetTableName;
-      if (!s || !t) return;
-
-      let next = null;
-      if (s === table && !visited.has(t)) next = t;
-      else if (t === table && !visited.has(s)) next = s;
-
-      if (next) {
-        visited.add(next);
-        queue.push({ table: next, path: [...path, l] });
-      }
-    });
-  }
-
-  const joinLevel = finalPath.length;
-
-  const addedTables = new Set();
-  const joinClauses = finalPath
-    .map((l) => buildJoinSQL(l, addedTables))
-    .filter(Boolean)
-    .join(' ');
-
-  const sql =
-    `SELECT "${tableName}"."${fieldName}" FROM "${baseTable}" ${joinClauses}`.trim();
-
-  return returnBoth ? { sql, joinLevel } : sql;
-}
-
-// Build map of SQL for all fields with joinLevel
-function buildFieldSQLMap() {
-  const result = {};
-  const tables = currentGraphData.tables || [];
-  const links = currentGraphData.links || [];
-
-  const baseTableObj = tables.find((t) => t.baseTable);
-  if (!baseTableObj) return result;
-
-  const baseTable = baseTableObj.name;
-
-  // BFS reachable tables
-  const reachable = new Set([baseTable]);
-  const queue = [baseTable];
-
-  while (queue.length) {
-    const t = queue.shift();
-
-    links.forEach((l) => {
-      if (!l.sourceTableName || !l.targetTableName) return;
-
-      if (l.sourceTableName === t && !reachable.has(l.targetTableName)) {
-        reachable.add(l.targetTableName);
-        queue.push(l.targetTableName);
-      }
-
-      if (l.targetTableName === t && !reachable.has(l.sourceTableName)) {
-        reachable.add(l.sourceTableName);
-        queue.push(l.sourceTableName);
-      }
-    });
-  }
-
-  // Build SQL map only for reachable tables
   tables.forEach((table) => {
-    if (!reachable.has(table.name)) return;
+    const tableEntry = {
+      tableId: table.id,
+      tableName: table.name,
+      fields: [],
+    };
 
-    result[table.name] = [];
+    table.fields.forEach((field) => {
+      let sql = '';
+      let joinLevel = 0;
 
-    (table.fields || []).forEach((field) => {
-      const { sql, joinLevel } = getSQLForField(table.name, field.name, true);
+      // ---------------------------
+      // BASE TABLE
+      // ---------------------------
+      if (table.baseTable) {
+        joinLevel = 0;
 
-      result[table.name].push({
-        fieldName: field.name,
+        sql =
+          `SELECT \\\"${field.name}\\\" FROM \\\"${table.name}\\\" ` +
+          `WHERE \\\"${baseTableKey}\\\" = '"&${table.name}::${baseTableKey}&"'`;
+      }
+
+      // ---------------------------
+      // JOIN LEVEL 1
+      // ---------------------------
+      else {
+        const directLink = links.find(
+          (l) =>
+            (l.sourceTableName === baseTableName &&
+              l.targetTableName === table.name) ||
+            (l.targetTableName === baseTableName &&
+              l.sourceTableName === table.name)
+        );
+
+        if (!directLink) return;
+
+        joinLevel = 1;
+
+        const fk =
+          directLink.sourceTableName === baseTableName
+            ? directLink.targetFieldName
+            : directLink.sourceFieldName;
+
+        const pk =
+          directLink.sourceTableName === baseTableName
+            ? directLink.sourceFieldName
+            : directLink.targetFieldName;
+
+        sql =
+          `SELECT \\\"${field.name}\\\" FROM \\\"${table.name}\\\" ` +
+          `WHERE \\\"${fk}\\\" = '"&${baseTableName}::${pk}&"'`;
+      }
+
+      tableEntry.fields.push({
         fieldId: field.id,
+        fieldName: field.name,
         sql,
         joinLevel,
       });
     });
+
+    if (tableEntry.fields.length) {
+      sqlMap.push(tableEntry);
+    }
   });
 
-  return result;
+  return sqlMap;
 }
 
 //--------------------------------------------------------------------------------------------------------
@@ -603,7 +559,7 @@ document
 // ----------------------------------
 document.getElementById('btnExport').addEventListener('click', () => {
   const exportData = JSON.parse(JSON.stringify(currentGraphData));
-  const sqlMap = buildFieldSQLMap();
+  const sqlMap = buildSqlMap();
   graph.getNodes().forEach((node) => {
     const pos = node.position();
     const table = exportData.tables.find((t) => t.id === node.id);
@@ -652,9 +608,19 @@ window.updateBaseTable = (newBaseTableName) => {
   applyGlobalRelationCountSort();
 };
 
+window.updateBaseTableKey = (newBaseTableKeyName) => {
+  console.log(currentGraphData);
+  currentGraphData.tables.forEach((t) => {
+    if (t.baseTable === true) {
+      t.baseTableKey = newBaseTableKeyName;
+    }
+  });
+  applyGlobalRelationCountSort();
+};
+
 window.sendJSON = async () => {
   const exportData = JSON.parse(JSON.stringify(currentGraphData));
-  const sqlMap = buildFieldSQLMap();
+  const sqlMap = buildSqlMap();
   graph.getNodes().forEach((node) => {
     const pos = node.position();
     const table = exportData.tables.find((t) => t.id === node.id);
