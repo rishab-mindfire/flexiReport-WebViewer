@@ -24,9 +24,9 @@ let currentGraphData = { tables: [], links: [] };
 // ----------------------------------
 // Constants
 // ----------------------------------
-const FIELD_HEIGHT = 22;
+const FIELD_HEIGHT = 36; // row height in px (used for port positioning and node height)
 const HEADER_HEIGHT = 42;
-const PORT_TOP_MARGIN = 10;
+const PORT_TOP_MARGIN = FIELD_HEIGHT / 2; // position ports at the vertical center of the field row
 
 // ----------------------------------
 // Graph Initialization
@@ -63,25 +63,45 @@ const graph = new Graph({
 // Build HTML
 // ----------------------------------
 function buildTableHtml(table) {
+  const fields = table.fields || [];
+  const collapsed =
+    table.collapsed === undefined ? fields.length > 5 : table.collapsed;
+
+  const fieldsHtml = fields
+    .map((f, i) => {
+      const extra = i >= 5 ? ' extra-field' : '';
+      const hidden = collapsed && i >= 5 ? ' hidden' : '';
+      return `<div class="er-field${extra}${hidden} ${
+        table.baseTableKey == f.name ? 'base-tableKey' : ''
+      }" data-name="${f.id || f.name}">${f.name}</div>`;
+    })
+    .join('');
+
+  const showMoreButton =
+    fields.length > 5
+      ? `<button class="show-more" aria-expanded="${!collapsed}" title="Show more fields" tabindex="0" type="button">
+        <span class="show-more-text">${
+          collapsed ? 'Show more' : 'Show less'
+        }</span>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <path d="M6 9l6 6 6-6" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+        </svg>
+      </button>`
+      : '';
+
   return `
-    <div class="er-table ${table.baseTable ? 'base-table' : ''}">
-      <div class="er-header">${table.name}</div>
+    <div class="er-table ${
+      table.baseTable ? 'base-table' : ''
+    }" data-node-id="${table.id}">
+      <div class="er-header">
+        <span class="er-title">${table.name}</span>
+        ${showMoreButton}
+      </div>
       <div class="er-fields-container">
-        ${(table.fields || [])
-          .map((f) => {
-            const isBaseKey =
-              table.baseTableKey && f.name === table.baseTableKey;
-            return `<div class="er-field ${
-              isBaseKey ? 'base-key' : ''
-            }" data-name="${f.id || f.name}">
-                      ${f.name}
-                    </div>`;
-          })
-          .join('')}
+        ${fieldsHtml}
       </div>
     </div>`;
 }
-
 // ----------------------------------
 // Track Node Positions
 // ----------------------------------
@@ -128,9 +148,95 @@ function makePortsForTable(table) {
   });
 }
 
+// Toggle visibility and interactivity of per-field ports for a specific table
+function togglePortsVisibility(tableId, table, expanded) {
+  const node = graph.getCell(tableId);
+  const fieldIds = (table.fields || []).map((f) => f.id || f.name);
+
+  // Helper to set a port attr if API is available
+  const setPortAttr = (portId, path, value) => {
+    try {
+      if (typeof node.setPortProp === 'function') {
+        node.setPortProp(portId, path, value);
+        return true;
+      }
+      if (typeof node.portProp === 'function') {
+        node.portProp(portId, path, value);
+        return true;
+      }
+    } catch (e) {}
+    return false;
+  };
+
+  // For each field after the first 5, hide/show their ports
+  fieldIds.forEach((fid, i) => {
+    if (i < 5) return; // only affect extra fields
+
+    const leftPortId = `${tableId}.L.${fid}`;
+    const rightPortId = `${tableId}.R.${fid}`;
+    [leftPortId, rightPortId].forEach((pid) => {
+      // If port doesn't exist on this table (e.g., base table left ports), ignore
+      try {
+        // Try the API first
+        let applied = false;
+        applied =
+          setPortAttr(pid, 'attrs/circle/display', expanded ? null : 'none') ||
+          applied;
+        applied =
+          setPortAttr(
+            pid,
+            'attrs/circle/pointerEvents',
+            expanded ? null : 'none'
+          ) || applied;
+        applied =
+          setPortAttr(pid, 'attrs/circle/opacity', expanded ? null : 0) ||
+          applied;
+
+        if (!applied) {
+          // Fallback: try to find the port element in the node's DOM and hide/show it
+          const nodeEl = container.querySelector(`[data-node-id="${tableId}"]`);
+          if (!nodeEl) return;
+
+          // Try multiple attribute selectors that X6 might use
+          const selectors = [
+            `[data-portid="${pid}"]`,
+            `[data-port-id="${pid}"]`,
+            `[data-port="${pid}"]`,
+          ];
+          selectors.forEach((sel) => {
+            const portEls = nodeEl.querySelectorAll(sel);
+            portEls.forEach((portEl) => {
+              const circle = portEl.querySelector('circle');
+              if (circle) {
+                circle.style.display = expanded ? '' : 'none';
+                circle.style.pointerEvents = expanded ? '' : 'none';
+                circle.style.opacity = expanded ? '' : '0';
+              }
+
+              // Additionally, hide the port wrapper if exists
+              portEl.style.display = expanded ? '' : 'none';
+            });
+          });
+        }
+      } catch (e) {
+        // ignore per-port errors
+      }
+    });
+  });
+}
+
 function addTableNode(table) {
-  const height = HEADER_HEIGHT + (table.fields?.length || 1) * 36 + 10;
-  graph.addNode({
+  // default collapsed state when there are more than 5 fields
+  if ((table.fields?.length || 0) > 5 && table.collapsed === undefined) {
+    table.collapsed = true;
+  }
+
+  const visibleCount = table.collapsed
+    ? Math.min(5, table.fields.length)
+    : table.fields?.length || 1;
+  const height = HEADER_HEIGHT + visibleCount * FIELD_HEIGHT + 10;
+
+  const node = graph.addNode({
     id: table.id,
     shape: 'html',
     x: table.position?.x ?? 60,
@@ -162,6 +268,64 @@ function addTableNode(table) {
       items: makePortsForTable(table),
     },
   });
+
+  // If there are extra fields, attach the show-more handler without interfering with ports
+  if ((table.fields?.length || 0) > 5) {
+    // Defer to next tick to ensure DOM is attached
+    setTimeout(() => {
+      const nodeEl = container.querySelector(`[data-node-id="${table.id}"]`);
+      if (!nodeEl) return;
+      const btn = nodeEl.querySelector('.show-more');
+      const extraFields = nodeEl.querySelectorAll('.er-field.extra-field');
+      const update = (expanded) => {
+        extraFields.forEach((el) => el.classList.toggle('hidden', !expanded));
+        if (btn) {
+          btn.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+          btn.classList.toggle('expanded', expanded);
+          const txt = btn.querySelector('.show-more-text');
+          if (txt) txt.textContent = expanded ? 'Show less' : 'Show more';
+        }
+        const newVisible = expanded ? table.fields.length : 5;
+        const newHeight = HEADER_HEIGHT + newVisible * FIELD_HEIGHT + 10;
+        const cell = graph.getCell(table.id);
+        if (cell && typeof cell.resize === 'function')
+          cell.resize(260, newHeight);
+
+        // Also toggle ports visibility/interactivity for extra fields
+        try {
+          togglePortsVisibility(table.id, table, expanded);
+        } catch (e) {
+          // ignore; function might not be available in older contexts
+        }
+
+        // Persist collapsed state back to currentGraphData if present
+        try {
+          const tableInData = (currentGraphData.tables || []).find(
+            (t) => t.id === table.id
+          );
+          if (tableInData) tableInData.collapsed = !expanded; // collapsed === not expanded
+          const nodeCell = graph.getCell(table.id);
+          if (nodeCell)
+            nodeCell.setData &&
+              nodeCell.setData({
+                ...(nodeCell.data || {}),
+                collapsed: !expanded,
+              });
+        } catch (e) {}
+      };
+
+      // Initialize visual state
+      update(!table.collapsed);
+
+      if (btn) {
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation(); // don't trigger node selection or drag
+          table.collapsed = !table.collapsed;
+          update(!table.collapsed);
+        });
+      }
+    }, 0);
+  }
 }
 
 function updateEdgeLabelAndStyle(edge, relation) {
@@ -462,6 +626,7 @@ function loadGraphData(data) {
     addRemoveButton(edge);
   });
 }
+
 // ----------------------------------
 // SQL Generation buildSqlMap()
 // ----------------------------------
@@ -477,6 +642,14 @@ function buildSqlMap() {
   const baseTableName = baseTable.name;
   const baseTableKey = baseTable.baseTableKey;
 
+  // Helper function find direct link between two tables
+  const findLink = (a, b) =>
+    links.find(
+      (l) =>
+        (l.sourceTableName === a && l.targetTableName === b) ||
+        (l.targetTableName === a && l.sourceTableName === b)
+    );
+
   tables.forEach((table) => {
     const tableEntry = {
       tableId: table.id,
@@ -489,7 +662,7 @@ function buildSqlMap() {
       let joinLevel = 0;
 
       // ---------------------------
-      // BASE TABLE
+      // BASE TABLE (LEVEL 0)
       // ---------------------------
       if (table.baseTable) {
         joinLevel = 0;
@@ -500,35 +673,75 @@ function buildSqlMap() {
       }
 
       // ---------------------------
-      // JOIN LEVEL 1
+      // LEVEL 1 (Direct to base)
       // ---------------------------
       else {
-        const directLink = links.find(
-          (l) =>
-            (l.sourceTableName === baseTableName &&
-              l.targetTableName === table.name) ||
-            (l.targetTableName === baseTableName &&
-              l.sourceTableName === table.name)
-        );
+        const level1Link = findLink(baseTableName, table.name);
 
-        if (!directLink) return;
+        if (level1Link) {
+          joinLevel = 1;
 
-        joinLevel = 1;
+          const fk =
+            level1Link.sourceTableName === baseTableName
+              ? level1Link.targetFieldName
+              : level1Link.sourceFieldName;
 
-        const fk =
-          directLink.sourceTableName === baseTableName
-            ? directLink.targetFieldName
-            : directLink.sourceFieldName;
+          const pk =
+            level1Link.sourceTableName === baseTableName
+              ? level1Link.sourceFieldName
+              : level1Link.targetFieldName;
 
-        const pk =
-          directLink.sourceTableName === baseTableName
-            ? directLink.sourceFieldName
-            : directLink.targetFieldName;
+          sql =
+            `SELECT \\\"${field.name}\\\" FROM \\\"${table.name}\\\" ` +
+            `WHERE \\\"${fk}\\\" = '"&${baseTableName}::${pk}&"'`;
+        }
 
-        sql =
-          `SELECT \\\"${field.name}\\\" FROM \\\"${table.name}\\\" ` +
-          `WHERE \\\"${fk}\\\" = '"&${baseTableName}::${pk}&"'`;
+        // ---------------------------
+        // LEVEL 2 (via level-1 table)
+        // ---------------------------
+        else {
+          const level1Table = tables.find(
+            (t) =>
+              findLink(baseTableName, t.name) && findLink(t.name, table.name)
+          );
+
+          if (!level1Table) return;
+
+          const linkBaseToL1 = findLink(baseTableName, level1Table.name);
+          const linkL1ToL2 = findLink(level1Table.name, table.name);
+
+          joinLevel = 2;
+
+          const baseFK =
+            linkBaseToL1.sourceTableName === baseTableName
+              ? linkBaseToL1.sourceFieldName
+              : linkBaseToL1.targetFieldName;
+
+          const level1PK =
+            linkBaseToL1.sourceTableName === baseTableName
+              ? linkBaseToL1.targetFieldName
+              : linkBaseToL1.sourceFieldName;
+
+          const level1FK =
+            linkL1ToL2.sourceTableName === level1Table.name
+              ? linkL1ToL2.sourceFieldName
+              : linkL1ToL2.targetFieldName;
+
+          const level2PK =
+            linkL1ToL2.sourceTableName === level1Table.name
+              ? linkL1ToL2.targetFieldName
+              : linkL1ToL2.sourceFieldName;
+
+          sql =
+            `SELECT \\\"${field.name}\\\" FROM \\\"${table.name}\\\" ` +
+            `WHERE \\\"${level2PK}\\\" = (` +
+            `SELECT \\\"${level1FK}\\\" FROM \\\"${level1Table.name}\\\" ` +
+            `WHERE \\\"${level1PK}\\\" = '"&${baseTableName}::${baseFK}&"'` +
+            `)`;
+        }
       }
+
+      if (!sql) return;
 
       tableEntry.fields.push({
         fieldId: field.id,
@@ -546,10 +759,14 @@ function buildSqlMap() {
   return sqlMap;
 }
 
-//--------------------------------------------------------------------------------------------------------
 // ----------------------------------
 // Center Graph
 // ----------------------------------
+function zoomInGraph() {
+  graph.centerContent();
+  const currentZoom = graph.zoom();
+  graph.zoomTo(currentZoom * 0.85);
+}
 document
   .getElementById('btnCenter')
   .addEventListener('click', () => graph.centerContent());
@@ -584,7 +801,7 @@ document.getElementById('btnLoadDemo').addEventListener('click', () => {
     .then((jsonData) => {
       currentGraphData = JSON.parse(JSON.stringify(jsonData));
       applyGlobalRelationCountSort();
-      graph.centerContent();
+      zoomInGraph();
     })
     .catch((err) => console.error('Failed to load demo JSON:', err));
 });
@@ -594,7 +811,7 @@ window.receiveJSONFromFM = (jsonString) => {
     const parsed = JSON.parse(jsonString);
     currentGraphData = JSON.parse(JSON.stringify(parsed));
     applyGlobalRelationCountSort();
-    graph.centerContent();
+    zoomInGraph();
   } catch (e) {
     alert('Invalid JSON from FileMaker');
     console.error(e);

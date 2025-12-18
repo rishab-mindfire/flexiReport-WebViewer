@@ -1,170 +1,617 @@
-// =====================
-// ERD Graph
-// =====================
-let currentGraphData = null;
-
-function buildTableHtml(table) {
-  const fieldsHtml = (table.fields || [])
-    .map(
-      (f) => `
-      <div class="er-field" data-name="${f.id || f.name}">
-        <span>${f.name}</span>
-      </div>
-    `
-    )
-    .join('');
-
-  return `
-    <div class="er-table ${table.baseTable ? 'base-table' : ''}">
-      <div class="er-header">${table.name}</div>
-      <div class="er-fields-container">${fieldsHtml}</div>
-    </div>
-  `;
-}
-
 const { Graph } = window.X6;
 
+// ----------------------------------
+// DOM References
+// ----------------------------------
+const container = document.getElementById('container');
+const edgeControls = document.getElementById('edge-controls');
+const relationTypeSelect = document.getElementById('relation-type');
+const leftFieldSelect = document.getElementById('edge-left-field');
+const rightFieldSelect = document.getElementById('edge-right-field');
+const btnSaveRelation = document.getElementById('btnSaveRelation');
+const btnCancelRelation = document.getElementById('btnCancelRelation');
+const deleteModal = document.getElementById('delete-modal');
+const btnConfirmDelete = document.getElementById('btnConfirmDelete');
+const btnCancelDelete = document.getElementById('btnCancelDelete');
+
+// ----------------------------------
+// State
+// ----------------------------------
+let selectedEdge = null;
+let edgeToDelete = null;
+let currentGraphData = { tables: [], links: [] };
+
+// ----------------------------------
+// Constants
+// ----------------------------------
+const FIELD_HEIGHT = 36; // row height in px (used for port positioning and node height)
+const HEADER_HEIGHT = 42;
+const PORT_TOP_MARGIN = FIELD_HEIGHT / 2; // position ports at the vertical center of the field row
+
+// ----------------------------------
+// Graph Initialization
+// ----------------------------------
 const graph = new Graph({
-  container: document.getElementById('container'),
-  grid: true,
-  panning: true,
-  mousewheel: { enabled: true, modifiers: 'ctrl' },
+  container,
+  grid: {
+    visible: true,
+    type: 'doubleMesh',
+    args: [
+      { color: '#eee', thickness: 1 },
+      { color: '#ddd', thickness: 1, factor: 4 },
+    ],
+  },
+  mousewheel: { enabled: true, modifiers: ['ctrl', 'meta'] },
   connecting: {
+    snap: true,
     allowBlank: false,
     allowLoop: false,
     allowMulti: true,
-    highlight: true,
-    connector: { name: 'normal' },
-    createEdge() {
-      return graph.createEdge({
-        attrs: {
-          line: {
-            stroke: '#A2B1C3',
-            strokeWidth: 2,
-            targetMarker: { name: 'classic', size: 8 },
-          },
-        },
-      });
-    },
-
-    validateConnection({ sourcePort, targetPort, targetCell }) {
-      if (!sourcePort || !targetPort) return false;
-      if (targetCell?.data?.baseTable) return false;
+    connector: { name: 'rounded', args: { radius: 8 } },
+    router: { name: 'er' },
+    validateConnection({ sourcePort, targetPort }) {
+      // Only allow source from right ports and target from left ports
       return (
         String(sourcePort).includes('.R.') && String(targetPort).includes('.L.')
       );
     },
   },
+  selecting: { enabled: true, multiple: false },
 });
 
-// ---------------------
-// LOAD JSON DATA
-// ---------------------
-function loadFromJSON(data) {
-  graph.clearCells();
-  const headerHeight = 36;
-  const rowHeight = 32;
-  const nodeWidth = 250;
-  const nodesArr =
-    data.nodes ??
-    (data.tables || []).map((t) => ({
-      id: t.id,
-      name: t.name,
-      baseTable: t.baseTable || false,
-      position: t.position,
-      fields: (t.fields || []).map((f) => ({
-        id: f.id || f.name,
-        name: f.name,
-      })),
-    }));
+// ----------------------------------
+// Build HTML
+// ----------------------------------
+function buildTableHtml(table) {
+  const fields = table.fields || [];
+  const collapsed =
+    table.collapsed === undefined ? fields.length > 5 : table.collapsed;
 
-  const edgesArr =
-    data.edges ??
-    (data.links || []).map((l) => {
-      const parse = (v) => {
-        if (typeof v === 'string') {
-          const [table, field] = v.split('.');
-          return { table, field };
+  const fieldsHtml = fields
+    .map((f, i) => {
+      const extra = i >= 5 ? ' extra-field' : '';
+      const hidden = collapsed && i >= 5 ? ' hidden' : '';
+      return `<div class="er-field${extra}${hidden}" data-name="${
+        f.id || f.name
+      }">${f.name}</div>`;
+    })
+    .join('');
+
+  const showMoreButton =
+    fields.length > 5
+      ? `<button class="show-more" aria-expanded="${!collapsed}" title="Show more fields" tabindex="0" type="button">
+        <span class="show-more-text">${
+          collapsed ? 'Show more' : 'Show less'
+        }</span>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <path d="M6 9l6 6 6-6" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+        </svg>
+      </button>`
+      : '';
+
+  return `
+    <div class="er-table ${
+      table.baseTable ? 'base-table' : ''
+    }" data-node-id="${table.id}">
+      <div class="er-header">
+        <span class="er-title">${table.name}</span>
+        ${showMoreButton}
+      </div>
+      <div class="er-fields-container">
+        ${fieldsHtml}
+      </div>
+    </div>`;
+}
+// ----------------------------------
+// Track Node Positions
+// ----------------------------------
+function saveNodePositions() {
+  const positions = {};
+  graph.getNodes().forEach((node) => {
+    const pos = node.position();
+    positions[node.id] = { x: pos.x, y: pos.y };
+  });
+  return positions;
+}
+
+// ----------------------------------
+// Port connection formation
+// ----------------------------------
+function makePortsForTable(table) {
+  return (table.fields || []).flatMap((f, i) => {
+    const fid = f.id || f.name;
+
+    if (table.baseTable) {
+      // Base table  only right ports opens
+      return [
+        {
+          id: `${table.id}.R.${fid}`,
+          group: 'right',
+          args: { y: HEADER_HEIGHT + i * FIELD_HEIGHT + PORT_TOP_MARGIN },
+        },
+      ];
+    } else {
+      // Other left and right ports opens
+      return [
+        {
+          id: `${table.id}.L.${fid}`,
+          group: 'left',
+          args: { y: HEADER_HEIGHT + i * FIELD_HEIGHT + PORT_TOP_MARGIN },
+        },
+        {
+          id: `${table.id}.R.${fid}`,
+          group: 'right',
+          args: { y: HEADER_HEIGHT + i * FIELD_HEIGHT + PORT_TOP_MARGIN },
+        },
+      ];
+    }
+  });
+}
+
+// Toggle visibility and interactivity of per-field ports for a specific table
+function togglePortsVisibility(tableId, table, expanded) {
+  const node = graph.getCell(tableId);
+  const fieldIds = (table.fields || []).map((f) => f.id || f.name);
+
+  // Helper to set a port attr if API is available
+  const setPortAttr = (portId, path, value) => {
+    try {
+      if (typeof node.setPortProp === 'function') {
+        node.setPortProp(portId, path, value);
+        return true;
+      }
+      if (typeof node.portProp === 'function') {
+        node.portProp(portId, path, value);
+        return true;
+      }
+    } catch (e) {}
+    return false;
+  };
+
+  // For each field after the first 5, hide/show their ports
+  fieldIds.forEach((fid, i) => {
+    if (i < 5) return; // only affect extra fields
+
+    const leftPortId = `${tableId}.L.${fid}`;
+    const rightPortId = `${tableId}.R.${fid}`;
+    [leftPortId, rightPortId].forEach((pid) => {
+      // If port doesn't exist on this table (e.g., base table left ports), ignore
+      try {
+        // Try the API first
+        let applied = false;
+        applied =
+          setPortAttr(pid, 'attrs/circle/display', expanded ? null : 'none') ||
+          applied;
+        applied =
+          setPortAttr(
+            pid,
+            'attrs/circle/pointerEvents',
+            expanded ? null : 'none'
+          ) || applied;
+        applied =
+          setPortAttr(pid, 'attrs/circle/opacity', expanded ? null : 0) ||
+          applied;
+
+        if (!applied) {
+          // Fallback: try to find the port element in the node's DOM and hide/show it
+          const nodeEl = container.querySelector(`[data-node-id="${tableId}"]`);
+          if (!nodeEl) return;
+
+          // Try multiple attribute selectors that X6 might use
+          const selectors = [
+            `[data-portid="${pid}"]`,
+            `[data-port-id="${pid}"]`,
+            `[data-port="${pid}"]`,
+          ];
+          selectors.forEach((sel) => {
+            const portEls = nodeEl.querySelectorAll(sel);
+            portEls.forEach((portEl) => {
+              const circle = portEl.querySelector('circle');
+              if (circle) {
+                circle.style.display = expanded ? '' : 'none';
+                circle.style.pointerEvents = expanded ? '' : 'none';
+                circle.style.opacity = expanded ? '' : '0';
+              }
+
+              // Additionally, hide the port wrapper if exists
+              portEl.style.display = expanded ? '' : 'none';
+            });
+          });
         }
-        return v;
-      };
-
-      return {
-        id: l.id || `e_${Math.random().toString(36).slice(2, 9)}`,
-        source: parse(l.source),
-        target: parse(l.target),
-      };
+      } catch (e) {
+        // ignore per-port errors
+      }
     });
+  });
+}
 
-  // ---------------------
-  // CREATE NODES
-  // ---------------------
+function addTableNode(table) {
+  // default collapsed state when there are more than 5 fields
+  if ((table.fields?.length || 0) > 5 && table.collapsed === undefined) {
+    table.collapsed = true;
+  }
 
-  nodesArr.forEach((n, i) => {
-    const totalHeight = headerHeight + (n.fields?.length || 0) * rowHeight;
-    let portItems = [];
-    (n.fields || []).forEach((f, i) => {
-      const y = headerHeight + i * rowHeight + rowHeight / 2;
-      const fid = f.id || f.name;
-      if (!n.baseTable)
-        portItems.push({ id: `${n.id}.L.${fid}`, group: 'left', args: { y } });
-      portItems.push({ id: `${n.id}.R.${fid}`, group: 'right', args: { y } });
-    });
+  const visibleCount = table.collapsed
+    ? Math.min(5, table.fields.length)
+    : table.fields?.length || 1;
+  const height = HEADER_HEIGHT + visibleCount * FIELD_HEIGHT + 10;
 
-    graph.addNode({
-      id: n.id,
-      shape: 'html',
-      x: n.baseTable ? 120 : n.position?.x ?? 40 + i * 360,
-      y: n.position?.y ?? 40,
-      width: nodeWidth,
-      height: totalHeight,
-      html: buildTableHtml(n),
-      data: n,
-      ports: {
-        groups: {
-          left: {
-            position: { name: 'absolute', args: { x: 0, y: headerHeight } },
-            attrs: {
-              circle: {
-                magnet: 'passive',
-                r: 6,
-                stroke: '#1890ff',
-                fill: 'white',
-              },
-            },
-          },
-
-          right: {
-            position: {
-              name: 'absolute',
-              args: { x: nodeWidth, y: headerHeight },
-            },
-            attrs: {
-              circle: { magnet: true, r: 6, stroke: '#1890ff', fill: 'white' },
+  const node = graph.addNode({
+    id: table.id,
+    shape: 'html',
+    x: table.position?.x ?? 60,
+    y: table.position?.y ?? 60,
+    width: 260,
+    height,
+    html: buildTableHtml(table),
+    data: table,
+    ports: {
+      groups: {
+        left: {
+          position: { name: 'absolute', args: { x: 0 } },
+          attrs: {
+            circle: {
+              magnet: 'passive',
+              r: 6,
+              stroke: '#0e7490',
+              fill: '#fff',
             },
           },
         },
-        items: portItems,
+        right: {
+          position: { name: 'absolute', args: { x: 260 } },
+          attrs: {
+            circle: { magnet: true, r: 6, stroke: '#0e7490', fill: '#fff' },
+          },
+        },
       },
-    });
+      items: makePortsForTable(table),
+    },
   });
 
-  // ---------------------
-  // CREATE EDGES
-  // ---------------------
-  edgesArr.forEach((e) => {
+  // If there are extra fields, attach the show-more handler without interfering with ports
+  if ((table.fields?.length || 0) > 5) {
+    // Defer to next tick to ensure DOM is attached
+    setTimeout(() => {
+      const nodeEl = container.querySelector(`[data-node-id="${table.id}"]`);
+      if (!nodeEl) return;
+      const btn = nodeEl.querySelector('.show-more');
+      const extraFields = nodeEl.querySelectorAll('.er-field.extra-field');
+      const update = (expanded) => {
+        extraFields.forEach((el) => el.classList.toggle('hidden', !expanded));
+        if (btn) {
+          btn.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+          btn.classList.toggle('expanded', expanded);
+          const txt = btn.querySelector('.show-more-text');
+          if (txt) txt.textContent = expanded ? 'Show less' : 'Show more';
+        }
+        const newVisible = expanded ? table.fields.length : 5;
+        const newHeight = HEADER_HEIGHT + newVisible * FIELD_HEIGHT + 10;
+        const cell = graph.getCell(table.id);
+        if (cell && typeof cell.resize === 'function')
+          cell.resize(260, newHeight);
+
+        // Also toggle ports visibility/interactivity for extra fields
+        try {
+          togglePortsVisibility(table.id, table, expanded);
+        } catch (e) {
+          // ignore; function might not be available in older contexts
+        }
+
+        // Persist collapsed state back to currentGraphData if present
+        try {
+          const tableInData = (currentGraphData.tables || []).find(
+            (t) => t.id === table.id
+          );
+          if (tableInData) tableInData.collapsed = !expanded; // collapsed === not expanded
+          const nodeCell = graph.getCell(table.id);
+          if (nodeCell)
+            nodeCell.setData &&
+              nodeCell.setData({
+                ...(nodeCell.data || {}),
+                collapsed: !expanded,
+              });
+        } catch (e) {}
+      };
+
+      // Initialize visual state
+      update(!table.collapsed);
+
+      if (btn) {
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation(); // don't trigger node selection or drag
+          table.collapsed = !table.collapsed;
+          update(!table.collapsed);
+        });
+      }
+    }, 0);
+  }
+}
+
+function updateEdgeLabelAndStyle(edge, relation) {
+  const width = 10;
+  const height = 2;
+
+  edge.setLabels([
+    {
+      position: 0.5,
+      attrs: {
+        text: {
+          text: relation,
+          fill: '#05070eff',
+          fontSize: 12,
+          fontWeight: 600,
+          textAnchor: 'middle',
+        },
+        rect: {
+          fill: '#f8fafc',
+          stroke: '#0f4991ff',
+          rx: 6,
+          ry: 20,
+
+          refWidth: width,
+          refHeight: height,
+
+          refX: -width / 2,
+          refY: -height / 2,
+        },
+      },
+    },
+  ]);
+
+  edge.setData({ ...edge.getData(), relation });
+}
+
+function addRemoveButton(edge) {
+  edge.removeTools();
+  edge.addTools([
+    {
+      name: 'button-remove',
+      args: {
+        markup: [
+          { tagName: 'circle', attrs: { r: 10, fill: '#ef4444' } },
+          {
+            tagName: 'text',
+            textContent: 'X',
+            attrs: {
+              fill: '#fff',
+              fontSize: 13,
+              textAnchor: 'middle',
+              dy: '0.4em',
+            },
+          },
+        ],
+        distance: 0.6,
+        offset: { x: 20, y: 0 },
+        onClick: () => {
+          edgeToDelete = edge;
+          deleteModal.classList.remove('hidden');
+        },
+      },
+    },
+  ]);
+}
+
+// ----------------------------------
+// Add/Update link in currentGraphData
+// ----------------------------------
+function addOrUpdateLinkFromEdge(edge) {
+  // console.log(edge);
+  const srcNode = edge.getSourceNode();
+  const tgtNode = edge.getTargetNode();
+  if (!srcNode || !tgtNode) return;
+
+  const srcFieldId = String(edge.getSource().port || '')
+    .split('.')
+    .pop();
+  const tgtFieldId = String(edge.getTarget().port || '')
+    .split('.')
+    .pop();
+
+  const newLink = {
+    id: edge.id,
+    source: `${srcNode.id}.R.${srcFieldId}`,
+    target: `${tgtNode.id}.L.${tgtFieldId}`,
+    relation: edge.getData()?.relation || '=',
+    sourceTableName: srcNode.data?.name,
+    sourceFieldName:
+      srcNode.data?.fields.find((f) => f.id === srcFieldId)?.name || srcFieldId,
+    targetTableName: tgtNode.data?.name,
+    targetFieldName:
+      tgtNode.data?.fields.find((f) => f.id === tgtFieldId)?.name || tgtFieldId,
+  };
+
+  currentGraphData.links = currentGraphData.links || [];
+  const index = currentGraphData.links.findIndex((l) => l.id === newLink.id);
+  if (index === -1) currentGraphData.links.push(newLink);
+  else
+    currentGraphData.links[index] = {
+      ...currentGraphData.links[index],
+      ...newLink,
+    };
+}
+
+// ----------------------------------
+// GLOBAL: Sort tables & fields
+// ----------------------------------
+function applyGlobalRelationCountSort() {
+  const updated = JSON.parse(
+    JSON.stringify(currentGraphData || { tables: [], links: [] })
+  );
+
+  // Keep current positions
+  const nodePositions = saveNodePositions();
+
+  const relationCount = {};
+  const tableToLinkedFieldIds = {};
+
+  (updated.links || []).forEach((l) => {
+    const [sTable, , sField] = String(l.source).split('.');
+    const [tTable, , tField] = String(l.target).split('.');
+    relationCount[sTable] = (relationCount[sTable] || 0) + 1;
+    relationCount[tTable] = (relationCount[tTable] || 0) + 1;
+
+    if (!tableToLinkedFieldIds[sTable])
+      tableToLinkedFieldIds[sTable] = new Set();
+    if (!tableToLinkedFieldIds[tTable])
+      tableToLinkedFieldIds[tTable] = new Set();
+    if (sField) tableToLinkedFieldIds[sTable].add(sField);
+    if (tField) tableToLinkedFieldIds[tTable].add(tField);
+  });
+
+  updated.tables = (updated.tables || []).map((table) => {
+    // Preserve current position
+    if (nodePositions[table.id]) table.position = nodePositions[table.id];
+
+    const linkedFields = Array.from(tableToLinkedFieldIds[table.id] || []);
+    if (!table.fields) return table;
+
+    const linked = [],
+      other = [];
+    table.fields.forEach((f) => {
+      const fid = f.id || f.name;
+      linkedFields.includes(fid) ? linked.push(f) : other.push(f);
+    });
+
+    return { ...table, fields: [...linked, ...other] };
+  });
+
+  // Sort tables by relation count descending
+  updated.tables.sort(
+    (a, b) => (relationCount[b.id] || 0) - (relationCount[a.id] || 0)
+  );
+
+  currentGraphData = updated;
+  loadGraphData(updated);
+}
+
+// ----------------------------------
+// Edge Events
+// ----------------------------------
+graph.on('edge:connected', ({ edge }) => {
+  updateEdgeLabelAndStyle(edge, edge.getData()?.relation || '=');
+  addRemoveButton(edge);
+  addOrUpdateLinkFromEdge(edge);
+  applyGlobalRelationCountSort();
+});
+// ----------------------------------
+// Relation-ship Events
+// ----------------------------------
+graph.on('edge:click', ({ edge }) => {
+  selectedEdge = edge;
+  relationTypeSelect.value = edge.getData()?.relation || '=';
+
+  const srcNode = edge.getSourceNode();
+  const tgtNode = edge.getTargetNode();
+
+  leftFieldSelect.innerHTML = (tgtNode.data.fields || [])
+    .map((f) => `<option value="${f.id}">${f.name}</option>`)
+    .join('');
+  rightFieldSelect.innerHTML = (srcNode.data.fields || [])
+    .map((f) => `<option value="${f.id}">${f.name}</option>`)
+    .join('');
+
+  leftFieldSelect.value = edge.getTarget().port.split('.').pop();
+  rightFieldSelect.value = edge.getSource().port.split('.').pop();
+
+  const rect = container.getBoundingClientRect();
+  edgeControls.style.left =
+    rect.left + (rect.width - edgeControls.offsetWidth) / 2 + 'px';
+  edgeControls.style.top = '50px';
+  edgeControls.style.display = 'block';
+});
+
+graph.on('blank:click node:click', () => {
+  edgeControls.style.display = 'none';
+  selectedEdge = null;
+});
+
+// ----------------------------------
+// Save / Cancel Relation
+// ----------------------------------
+btnSaveRelation.addEventListener('click', () => {
+  if (!selectedEdge) return;
+
+  const relation = relationTypeSelect.value;
+  const newLeftField = leftFieldSelect.value;
+  const newRightField = rightFieldSelect.value;
+
+  const srcNode = selectedEdge.getSourceNode();
+  const tgtNode = selectedEdge.getTargetNode();
+
+  selectedEdge.setSource({
+    cell: srcNode.id,
+    port: `${srcNode.id}.R.${newRightField}`,
+  });
+  selectedEdge.setTarget({
+    cell: tgtNode.id,
+    port: `${tgtNode.id}.L.${newLeftField}`,
+  });
+  updateEdgeLabelAndStyle(selectedEdge, relation);
+
+  const link = currentGraphData.links.find((l) => l.id === selectedEdge.id);
+  if (link) {
+    link.source = `${srcNode.id}.R.${newRightField}`;
+    link.target = `${tgtNode.id}.L.${newLeftField}`;
+    link.relation = relation;
+  }
+
+  applyGlobalRelationCountSort();
+  edgeControls.style.display = 'none';
+  selectedEdge = null;
+});
+
+btnCancelRelation.addEventListener('click', () => {
+  edgeControls.style.display = 'none';
+  selectedEdge = null;
+});
+
+// ----------------------------------
+// Delete Edge Modal
+// ----------------------------------
+btnCancelDelete.addEventListener('click', () => {
+  edgeToDelete = null;
+  deleteModal.classList.add('hidden');
+});
+
+btnConfirmDelete.addEventListener('click', () => {
+  if (edgeToDelete) {
+    try {
+      edgeToDelete.remove();
+    } catch (e) {}
+    currentGraphData.links = currentGraphData.links.filter(
+      (l) => l.id !== edgeToDelete.id
+    );
+    applyGlobalRelationCountSort();
+  }
+  deleteModal.classList.add('hidden');
+  edgeToDelete = null;
+});
+
+// ----------------------------------
+// Load Graph
+// ----------------------------------
+function loadGraphData(data) {
+  currentGraphData = JSON.parse(JSON.stringify(data));
+  graph.clearCells();
+
+  const nodeMap = {};
+  currentGraphData.tables.forEach((table) => {
+    addTableNode(table);
+    nodeMap[table.id] = table;
+  });
+
+  (currentGraphData.links || []).forEach((l) => {
+    const [srcTableId, , srcFieldId] = String(l.source).split('.');
+    const [tgtTableId, , tgtFieldId] = String(l.target).split('.');
+    const srcNode = nodeMap[srcTableId];
+    const tgtNode = nodeMap[tgtTableId];
+    if (!srcNode || !tgtNode) return;
+
     const edge = graph.addEdge({
-      id: e.id,
-      source: {
-        cell: e.source.table,
-        port: `${e.source.table}.R.${e.source.field}`,
-      },
-
-      target: {
-        cell: e.target.table,
-        port: `${e.target.table}.L.${e.target.field}`,
-      },
-
+      id: l.id,
+      source: { cell: srcNode.id, port: `${srcNode.id}.R.${srcFieldId}` },
+      target: { cell: tgtNode.id, port: `${tgtNode.id}.L.${tgtFieldId}` },
       attrs: {
         line: {
           stroke: '#A2B1C3',
@@ -172,177 +619,219 @@ function loadFromJSON(data) {
           targetMarker: { name: 'classic', size: 8 },
         },
       },
+      data: { ...l },
     });
 
+    updateEdgeLabelAndStyle(edge, l.relation);
     addRemoveButton(edge);
   });
+}
+// ----------------------------------
+// SQL Generation with joinLevel
+// ----------------------------------
+// Build LEFT JOIN clause from a link
+function buildJoinSQL(link, addedTables = new Set()) {
+  if (!link) return '';
+  const sTable = link.sourceTableName;
+  const sField = link.sourceFieldName;
+  const tTable = link.targetTableName;
+  const tField = link.targetFieldName;
+  const rel = link.relation || '=';
 
-  graph.centerContent();
+  if (!sTable || !tTable) return '';
+
+  // Avoid duplicate joins
+  if (addedTables.has(tTable)) return '';
+  addedTables.add(tTable);
+
+  return `LEFT JOIN "${tTable}" ON "${sTable}"."${sField}" ${rel} "${tTable}"."${tField}"`;
 }
 
-// ---------------------
-//REMOVE BUTTON
-// ---------------------
-function addRemoveButton(edge) {
-  edge.removeTools();
-  edge.addTools([
-    {
-      name: 'button-remove',
-      args: {
-        distance: 0.5,
-        markup: [
-          {
-            tagName: 'circle',
-            selector: 'button',
-            attrs: {
-              r: 10,
-              fill: '#ff4d4f',
-              stroke: '#fff',
-              cursor: 'pointer',
-            },
-          },
+// Generate SQL for ONE FIELD using TABLE + FIELD
+function getSQLForField(tableName, fieldName, returnBoth = false) {
+  const tables = currentGraphData.tables || [];
+  const links = currentGraphData.links || [];
 
-          {
-            tagName: 'text',
-            selector: 'icon',
-            textContent: 'X',
-            attrs: {
-              fill: '#fff',
-              fontSize: 12,
-              textAnchor: 'middle',
-              dominantBaseline: 'middle',
-              dy: '0.1em',
-            },
-          },
-        ],
-      },
-    },
-  ]);
+  const targetTableObj = tables.find((t) => t.name === tableName);
+  if (!targetTableObj) return returnBoth ? { sql: '', joinLevel: 0 } : '';
+
+  const baseTableObj = tables.find((t) => t.baseTable);
+  if (!baseTableObj) return returnBoth ? { sql: '', joinLevel: 0 } : '';
+
+  const baseTable = baseTableObj.name;
+  const targetTable = targetTableObj.name;
+
+  // BFS shortest path
+  const visited = new Set([baseTable]);
+  const queue = [{ table: baseTable, path: [] }];
+  let finalPath = [];
+
+  while (queue.length) {
+    const { table, path } = queue.shift();
+
+    if (table === targetTable) {
+      finalPath = path;
+      break;
+    }
+
+    links.forEach((l) => {
+      const s = l.sourceTableName;
+      const t = l.targetTableName;
+      if (!s || !t) return;
+
+      let next = null;
+      if (s === table && !visited.has(t)) next = t;
+      else if (t === table && !visited.has(s)) next = s;
+
+      if (next) {
+        visited.add(next);
+        queue.push({ table: next, path: [...path, l] });
+      }
+    });
+  }
+
+  const joinLevel = finalPath.length;
+
+  const addedTables = new Set();
+  const joinClauses = finalPath
+    .map((l) => buildJoinSQL(l, addedTables))
+    .filter(Boolean)
+    .join(' ');
+
+  const sql =
+    `SELECT "${tableName}"."${fieldName}" FROM "${baseTable}" ${joinClauses}`.trim();
+
+  return returnBoth ? { sql, joinLevel } : sql;
 }
 
-// ---------------------
-//  EDGE CLICK TO DELETE
-// ---------------------
-graph.on('edge:tool:button-remove:pointerdown', ({ edge }) => {
-  if (!edge) return;
-  if (confirm('Delete this relationship?')) edge.remove();
-});
+// Build map of SQL for all fields with joinLevel
+function buildFieldSQLMap() {
+  const result = {};
+  const tables = currentGraphData.tables || [];
+  const links = currentGraphData.links || [];
 
-graph.on('edge:connected', ({ edge }) => addRemoveButton(edge));
+  const baseTableObj = tables.find((t) => t.baseTable);
+  if (!baseTableObj) return result;
 
-// ---------------------
-// EXPORT JSON
-// ---------------------
-function exportJSON() {
-  return {
-    tables: graph.getNodes().map((n) => ({
-      id: n.id,
-      name: n.data.name,
-      baseTable: n.data.baseTable || false,
-      position: n.position(),
-      fields: n.data.fields,
-    })),
+  const baseTable = baseTableObj.name;
 
-    links: graph.getEdges().map((e) => {
-      const s = e.getSource();
-      const t = e.getTarget();
-      const parse = (obj) => {
-        const [table, , field] = obj.port.split('.');
-        return { table, field };
-      };
+  // BFS reachable tables
+  const reachable = new Set([baseTable]);
+  const queue = [baseTable];
 
-      return { id: e.id, source: parse(s), target: parse(t) };
-    }),
-  };
-}
+  while (queue.length) {
+    const t = queue.shift();
 
-document.getElementById('btnExport').onclick = () => {
-  const blob = new Blob([JSON.stringify(exportJSON(), null, 2)], {
-    type: 'application/json',
+    links.forEach((l) => {
+      if (!l.sourceTableName || !l.targetTableName) return;
+
+      if (l.sourceTableName === t && !reachable.has(l.targetTableName)) {
+        reachable.add(l.targetTableName);
+        queue.push(l.targetTableName);
+      }
+
+      if (l.targetTableName === t && !reachable.has(l.sourceTableName)) {
+        reachable.add(l.sourceTableName);
+        queue.push(l.sourceTableName);
+      }
+    });
+  }
+
+  // Build SQL map only for reachable tables
+  tables.forEach((table) => {
+    if (!reachable.has(table.name)) return;
+
+    result[table.name] = [];
+
+    (table.fields || []).forEach((field) => {
+      const { sql, joinLevel } = getSQLForField(table.name, field.name, true);
+
+      result[table.name].push({
+        fieldName: field.name,
+        fieldId: field.id,
+        sql,
+        joinLevel,
+      });
+    });
   });
 
+  return result;
+}
+
+//--------------------------------------------------------------------------------------------------------
+// ----------------------------------
+// Center Graph
+// ----------------------------------
+document
+  .getElementById('btnCenter')
+  .addEventListener('click', () => graph.centerContent());
+
+// ----------------------------------
+// Export JSON
+// ----------------------------------
+document.getElementById('btnExport').addEventListener('click', () => {
+  const exportData = JSON.parse(JSON.stringify(currentGraphData));
+  const sqlMap = buildFieldSQLMap();
+  graph.getNodes().forEach((node) => {
+    const pos = node.position();
+    const table = exportData.tables.find((t) => t.id === node.id);
+    if (table) table.position = { x: pos.x, y: pos.y };
+  });
+  exportData.sqlMap = sqlMap;
+  const json = JSON.stringify(exportData, null, 2);
   const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
+  a.href = URL.createObjectURL(new Blob([json], { type: 'application/json' }));
   a.download = 'erd-export.json';
   a.click();
-};
+});
 
-document.getElementById('btnCenter').onclick = () => graph.centerContent();
+// Function to test the viewport methods on the graph.paper object
 
-document.getElementById('btnLoadDemo').onclick = () =>
+// ----------------------------------
+// Demo / FileMaker
+// ----------------------------------
+document.getElementById('btnLoadDemo').addEventListener('click', () => {
   fetch('http://localhost:8000/demoJSON/demo.json')
-    .then((r) => r.json())
-    .then((d) => {
-      currentGraphData = d;
-      loadFromJSON(d);
+    .then((res) => res.json())
+    .then((jsonData) => {
+      currentGraphData = JSON.parse(JSON.stringify(jsonData));
+      applyGlobalRelationCountSort();
+      graph.centerContent();
     })
-    .catch(() => console.warn('demo.json not found.'));
+    .catch((err) => console.error('Failed to load demo JSON:', err));
+});
 
-//---###### FILEMAKER stuff ---#######
-//-------------------------------------------------------------------------------------
-// ---------------------
-// RECEIVE JSON FROM FILEMAKER
-// ---------------------
-window.receiveJSONFromFM = function (jsonString) {
+window.receiveJSONFromFM = (jsonString) => {
   try {
-    currentGraphData = JSON.parse(jsonString);
-    loadFromJSON(currentGraphData);
-  } catch (error) {
-    console.error('Invalid JSON from FileMaker:', error);
-    alert('Failed to load data from FileMaker. Invalid JSON format.');
+    const parsed = JSON.parse(jsonString);
+    currentGraphData = JSON.parse(JSON.stringify(parsed));
+    applyGlobalRelationCountSort();
+    graph.centerContent();
+  } catch (e) {
+    alert('Invalid JSON from FileMaker');
+    console.error(e);
   }
 };
 
-// ---------------------
-// SEND JSON TO FILEMAKER
-// ---------------------
-window.sendToFileMaker = function (data) {
-  if (window.FileMaker && window.FileMaker.PerformScript) {
-    window.FileMaker.PerformScript('ReceiveERDData', JSON.stringify(data));
-  } else {
-    console.warn('Not running inside FileMaker WebViewer');
-  }
+window.updateBaseTable = (newBaseTableName) => {
+  currentGraphData.tables.forEach(
+    (t) => (t.baseTable = t.name === newBaseTableName)
+  );
+  applyGlobalRelationCountSort();
 };
 
-// ---------------------
-// UPDATE BASE TABLE
-// ---------------------
-window.updateBaseTable = function (newBaseTableId) {
-  try {
-    for (let table of currentGraphData.tables) {
-      if (table.id == newBaseTableId) {
-        table.baseTable = true;
-      } else {
-        table.baseTable = false;
-      }
-    }
-    loadFromJSON(currentGraphData);
-  } catch (error) {
-    console.error('Error updating base table:', error);
-    return false;
-  }
-};
+window.sendJSON = async () => {
+  const exportData = JSON.parse(JSON.stringify(currentGraphData));
+  const sqlMap = buildFieldSQLMap();
+  graph.getNodes().forEach((node) => {
+    const pos = node.position();
+    const table = exportData.tables.find((t) => t.id === node.id);
+    if (table) table.position = { x: pos.x, y: pos.y };
+  });
+  exportData.sqlMap = sqlMap;
+  const jsonData = JSON.stringify(exportData, null, 2);
 
-// ---------------------
-// SEND JSON TO FILEMAKER
-// ---------------------
-window.sendToFileMaker = function (data) {
-  if (window.FileMaker && window.FileMaker.PerformScript) {
-    window.FileMaker.PerformScript('ReceiveERDData', JSON.stringify(data));
-  } else {
-    console.warn('Not running inside FileMaker WebViewer');
+  if (window.FileMaker && FileMaker.PerformScript) {
+    FileMaker.PerformScript('receiveJSON', jsonData);
   }
-};
-
-// ---------------------
-// UPDATE BASE TABLE AND SEND TO FILEMAKER
-// ---------------------
-window.updateBaseTableAndSend = function (newBaseTableId) {
-  var success = window.updateBaseTable(newBaseTableId);
-  if (success && currentGraphData) {
-    // Send updated data back to FileMaker
-    window.sendToFileMaker(currentGraphData);
-    return true;
-  }
-  return false;
 };
