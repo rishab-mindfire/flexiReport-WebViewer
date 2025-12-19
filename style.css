@@ -135,16 +135,29 @@ body {
   color: #fff;
   height: 42px;
   padding: 0 10px;
-  font-weight: bold;
+  font-weight: 600;
   border-radius: 8px 8px 0 0;
+
   display: flex;
   align-items: center;
   justify-content: space-between;
+
   box-sizing: border-box;
+}
+.er-title {
+  font-size: 13px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .er-header .er-title {
   line-height: 42px;
+}
+.er-header > span:last-child {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
 }
 
 .er-header .show-more {
@@ -183,6 +196,24 @@ body {
 .er-fields-container {
   padding: 0;
   box-sizing: border-box;
+}
+
+.btn-delete {
+  background: transparent;
+  border: none;
+  color: #e24c4c;
+  cursor: pointer;
+  font-size: 24px;
+  border-radius: 4px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.btn-delete:hover {
+  background: rgba(255, 255, 255, 0.18);
+  color: rgb(207, 4, 4);
 }
 
 tspan {

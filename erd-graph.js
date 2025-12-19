@@ -24,9 +24,9 @@ let currentGraphData = { tables: [], links: [] };
 // ----------------------------------
 // Constants
 // ----------------------------------
-const FIELD_HEIGHT = 36; // row height in px (used for port positioning and node height)
+const FIELD_HEIGHT = 36;
 const HEADER_HEIGHT = 42;
-const PORT_TOP_MARGIN = FIELD_HEIGHT / 2; // position ports at the vertical center of the field row
+const PORT_TOP_MARGIN = FIELD_HEIGHT / 2;
 
 // ----------------------------------
 // Graph Initialization
@@ -95,7 +95,10 @@ function buildTableHtml(table) {
     }" data-node-id="${table.id}">
       <div class="er-header">
         <span class="er-title">${table.name}</span>
-        ${showMoreButton}
+        <span class="">
+         ${showMoreButton}
+         <button class="btn-delete">X</button>
+        </span>
       </div>
       <div class="er-fields-container">
         ${fieldsHtml}
@@ -220,6 +223,7 @@ function togglePortsVisibility(tableId, table, expanded) {
         }
       } catch (e) {
         // ignore per-port errors
+        console.log('error in port congiguration', e);
       }
     });
   });
@@ -236,7 +240,7 @@ function addTableNode(table) {
     : table.fields?.length || 1;
   const height = HEADER_HEIGHT + visibleCount * FIELD_HEIGHT + 10;
 
-  const node = graph.addNode({
+  graph.addNode({
     id: table.id,
     shape: 'html',
     x: table.position?.x ?? 60,
@@ -295,7 +299,7 @@ function addTableNode(table) {
         try {
           togglePortsVisibility(table.id, table, expanded);
         } catch (e) {
-          // ignore; function might not be available in older contexts
+          console.log('error', e);
         }
 
         // Persist collapsed state back to currentGraphData if present
@@ -326,6 +330,19 @@ function addTableNode(table) {
       }
     }, 0);
   }
+  //for delete table
+  setTimeout(() => {
+    const nodeEl = container.querySelector(`[data-node-id="${table.id}"]`);
+    if (!nodeEl) return;
+
+    const deleteBtn = nodeEl.querySelector('.btn-delete');
+    if (deleteBtn) {
+      deleteBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        deleteTableById(table.id);
+      });
+    }
+  }, 0);
 }
 
 function updateEdgeLabelAndStyle(edge, relation) {
@@ -429,6 +446,26 @@ function addOrUpdateLinkFromEdge(edge) {
       ...currentGraphData.links[index],
       ...newLink,
     };
+}
+
+// ----------------------------------
+// Add delete table
+// ----------------------------------
+function deleteTableById(tableId) {
+  const node = graph.getCell(tableId);
+  if (!node) return;
+
+  node.remove();
+  currentGraphData.tables = currentGraphData.tables.filter(
+    (t) => t.id !== tableId
+  );
+
+  currentGraphData.links = currentGraphData.links.filter(
+    (l) =>
+      !l.source.startsWith(`${tableId}.`) && !l.target.startsWith(`${tableId}.`)
+  );
+
+  applyGlobalRelationCountSort();
 }
 
 // ----------------------------------
@@ -587,6 +624,63 @@ btnConfirmDelete.addEventListener('click', () => {
   deleteModal.classList.add('hidden');
   edgeToDelete = null;
 });
+///////////////////////////////------------------
+function refreshTablesFromJSON(newJson) {
+  if (!newJson || !Array.isArray(newJson.tables)) return;
+
+  // Existing tables lookup (by id + name)
+  const existingTableKey = new Set(
+    (currentGraphData.tables || []).map((t) => `${t.id}::${t.name}`)
+  );
+
+  let added = false;
+
+  // 1️⃣ Add missing tables
+  newJson.tables.forEach((table) => {
+    const key = `${table.id}::${table.name}`;
+    if (!existingTableKey.has(key)) {
+      // deep clone to avoid mutation
+      const clonedTable = JSON.parse(JSON.stringify(table));
+
+      // default position (center-ish)
+      clonedTable.position = {
+        x: Math.random() * 300 + 100,
+        y: Math.random() * 200 + 100,
+      };
+
+      currentGraphData.tables.push(clonedTable);
+      added = true;
+    }
+  });
+
+  // 2️⃣ Add missing links ONLY if both tables exist
+  if (Array.isArray(newJson.links)) {
+    const existingLinkIds = new Set(
+      (currentGraphData.links || []).map((l) => l.id)
+    );
+
+    newJson.links.forEach((link) => {
+      if (existingLinkIds.has(link.id)) return;
+
+      const [sTable] = link.source.split('.');
+      const [tTable] = link.target.split('.');
+
+      const tableExists = currentGraphData.tables.some(
+        (t) => t.id === sTable || t.id === tTable
+      );
+
+      if (tableExists) {
+        currentGraphData.links.push(JSON.parse(JSON.stringify(link)));
+        added = true;
+      }
+    });
+  }
+
+  // 3️⃣ Rebuild graph ONLY if something changed
+  if (added) {
+    applyGlobalRelationCountSort();
+  }
+}
 
 // ----------------------------------
 // Load Graph
@@ -790,10 +884,8 @@ document.getElementById('btnExport').addEventListener('click', () => {
   a.click();
 });
 
-// Function to test the viewport methods on the graph.paper object
-
 // ----------------------------------
-// Demo / FileMaker
+// demo api json call for graph
 // ----------------------------------
 document.getElementById('btnLoadDemo').addEventListener('click', () => {
   fetch('http://localhost:8000/demoJSON/demo.json')
@@ -806,12 +898,25 @@ document.getElementById('btnLoadDemo').addEventListener('click', () => {
     .catch((err) => console.error('Failed to load demo JSON:', err));
 });
 
+// ---------------------------------------------------------------
+// FileMaker window function calls for intraction with web viewer
+// ---------------------------------------------------------------
 window.receiveJSONFromFM = (jsonString) => {
   try {
     const parsed = JSON.parse(jsonString);
     currentGraphData = JSON.parse(JSON.stringify(parsed));
     applyGlobalRelationCountSort();
     zoomInGraph();
+  } catch (e) {
+    alert('Invalid JSON from FileMaker');
+    console.error(e);
+  }
+};
+
+window.refreshTable = (jsonString) => {
+  try {
+    const parsed = JSON.parse(jsonString);
+    refreshTablesFromJSON(parsed);
   } catch (e) {
     alert('Invalid JSON from FileMaker');
     console.error(e);
