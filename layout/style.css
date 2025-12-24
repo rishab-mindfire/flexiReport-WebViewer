@@ -207,3 +207,9 @@ button.secondary {
 .element-content:focus {
   outline: none;
 }
+#fields-list .loading-text {
+  padding: 10px;
+  color: #666;
+  font-style: italic;
+  text-align: center;
+}

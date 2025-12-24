@@ -1,20 +1,192 @@
-const app = {
+/**
+ * 1. STATE & DATA STORE
+ */
+const Store = {
   data: [],
   selectedElement: null,
+};
 
-  init() {
-    this.buildFields();
-    this.setupDnD();
-    this.setupInteract();
-    this.setupKeep();
+/**
+ * 2. REPORT ENGINE
+ */
+const ReportEngine = {
+  calculate(funcName, fieldName) {
+    if (!fieldName || !funcName || Store.data.length === 0) return 0;
+
+    const vals = Store.data.map((r) => Number(r[fieldName] || 0));
+    let res = 0;
+
+    if (funcName === 'SUM') res = vals.reduce((a, b) => a + b, 0);
+    else if (funcName === 'AVG')
+      res = vals.length ? vals.reduce((a, b) => a + b, 0) / vals.length : 0;
+
+    return res.toLocaleString();
   },
-  buildFields() {
+
+  getSchema() {
+    const s = { parts: {} };
+    ['header', 'body', 'footer'].forEach((p) => {
+      const partEl = document.getElementById('part-' + p);
+      if (!partEl || partEl.style.display === 'none') return;
+
+      s.parts[p] = {
+        height: partEl.offsetHeight,
+        elements: [...partEl.querySelectorAll('.canvas-element')].map((e) => {
+          const type = e.dataset.type;
+          let cleanContent = '';
+
+          if (type === 'calculation') {
+            cleanContent = e.querySelector('.calc-result')?.textContent || '';
+          } else {
+            cleanContent =
+              e.querySelector('.element-content')?.textContent.trim() || '';
+          }
+
+          return {
+            type: type,
+            key: e.dataset.key || null,
+            content: cleanContent,
+            x: Math.round(parseFloat(e.dataset.x)) || 0,
+            y: Math.round(parseFloat(e.dataset.y)) || 0,
+            w: Math.round(parseFloat(e.style.width)) || 150,
+            h: Math.round(parseFloat(e.style.height)) || 22,
+            function: e.dataset.function || null,
+            field: e.dataset.field || null,
+          };
+        }),
+      };
+    });
+    return s;
+  },
+};
+
+/**
+ * 3. UI RENDERER
+ */
+const Renderer = {
+  createCanvasElement(parent, config) {
+    const { x, y, type, key, content, w = 150, h = 22, field } = config;
+    const funcName = config.function || config.func;
+
+    const el = document.createElement('div');
+    el.className = 'canvas-element' + (type === 'label' ? ' is-label' : '');
+    Object.assign(el.style, {
+      width: w + 'px',
+      height: h + 'px',
+      transform: `translate(${x}px,${y}px)`,
+    });
+
+    Object.assign(el.dataset, { x, y, type });
+    if (key) el.dataset.key = key;
+    if (funcName) el.dataset.function = funcName;
+    if (field) el.dataset.field = field;
+
+    const contentDiv = document.createElement('div');
+    contentDiv.className = 'element-content';
+    contentDiv.style.flex = '1';
+
+    if (type === 'calculation') {
+      this.setupCalculationUI(el, contentDiv, funcName, field);
+    } else if (type === 'label') {
+      contentDiv.contentEditable = true;
+      contentDiv.textContent = content || 'Text';
+    } else {
+      contentDiv.textContent = `[${key}]`;
+    }
+
+    const handle = document.createElement('div');
+    handle.className = 'drag-handle';
+    handle.textContent = '⋮⋮';
+
+    el.append(handle, contentDiv);
+    el.addEventListener('click', (e) => Actions.selectElement(el, e));
+
+    parent.appendChild(el);
+  },
+
+  setupCalculationUI(el, container, funcName, savedField) {
+    const select = document.createElement('select');
+    select.style.width = '100%';
+
+    const fields = Store.data.length > 0 ? Object.keys(Store.data[0]) : [];
+    select.innerHTML =
+      `<option value="">--select field--</option>` +
+      fields.map((k) => `<option value="${k}">${k}</option>`).join('');
+
+    const resultDisplay = document.createElement('div');
+    resultDisplay.className = 'calc-result';
+    resultDisplay.style.fontSize = '12px';
+
+    const update = (selectedField) => {
+      el.dataset.field = selectedField;
+      const res = ReportEngine.calculate(funcName, selectedField);
+      const label = funcName || 'CALC';
+      resultDisplay.textContent = selectedField
+        ? `${label}(${selectedField}) = ${res}`
+        : '';
+    };
+
+    select.addEventListener('change', (e) => update(e.target.value));
+
+    if (savedField) {
+      select.value = savedField;
+      update(savedField);
+    }
+
+    container.append(select, resultDisplay);
+  },
+};
+
+/**
+ * 4. ACTIONS & CONTROLLER
+ */
+const Actions = {
+  init() {
+    this.setupPartResizing();
+    this.setupKeyboardListeners();
+    this.setupSidebarToggles();
+    this.setupDropZones();
+
+    // Start loading data immediately on reload
+    this.loadDataFromAPI();
+  },
+
+  async loadDataFromAPI() {
     const list = document.getElementById('fields-list');
-    list.innerHTML = '';
 
-    if (!this.data.length) return;
+    try {
+      // Show loading text immediately
+      list.innerHTML = '<div class="loading-text">Loading fields...</div>';
 
-    Object.keys(this.data[0]).forEach((k) => {
+      const res = await fetch('http://localhost:8000/demoJSON/layoutJSON.json');
+      const jsonData = await res.json();
+
+      Store.data = jsonData;
+
+      // Only stop loading if data exists
+      if (Store.data && Store.data.length > 0) {
+        this.refreshToolbox();
+        this.refreshCalculations();
+      } else {
+        list.innerHTML = '<div class="loading-text">No data found.</div>';
+      }
+    } catch (err) {
+      list.innerHTML =
+        '<div class="loading-text" style="color:red">Failed to load data.</div>';
+      console.error('API failed:', err);
+    }
+  },
+
+  refreshToolbox() {
+    const list = document.getElementById('fields-list');
+    list.innerHTML = ''; // This stops the loading state
+
+    if (!Store.data || Store.data.length === 0) return;
+
+    // Optimized: Only get keys from the first row
+    const keys = Object.keys(Store.data[0]);
+
+    keys.forEach((k) => {
       const d = document.createElement('div');
       d.className = 'tool-item';
       d.draggable = true;
@@ -23,216 +195,133 @@ const app = {
       d.textContent = k;
       list.appendChild(d);
     });
+
+    this.bindNativeDrag();
   },
-  setupDnD() {
-    // remove old listeners safely
+
+  refreshCalculations() {
+    document
+      .querySelectorAll('.canvas-element[data-type="calculation"]')
+      .forEach((el) => {
+        const select = el.querySelector('select');
+        const func = el.dataset.function;
+        const field = el.dataset.field;
+
+        if (select && select.options.length <= 1) {
+          select.innerHTML =
+            `<option value="">--select field--</option>` +
+            Object.keys(Store.data[0] || {})
+              .map((k) => `<option value="${k}">${k}</option>`)
+              .join('');
+          select.value = field || '';
+        }
+
+        const resDiv = el.querySelector('.calc-result');
+        if (resDiv && field) {
+          resDiv.textContent = `${func}(${field}) = ${ReportEngine.calculate(
+            func,
+            field
+          )}`;
+        }
+      });
+  },
+
+  bindNativeDrag() {
     document.querySelectorAll('.tool-item').forEach((t) => {
-      t.replaceWith(t.cloneNode(true));
-    });
-    // re-select after clone
-    document.querySelectorAll('.tool-item').forEach((t) => {
-      t.addEventListener('dragstart', (e) => {
+      t.ondragstart = (e) => {
         e.dataTransfer.setData('type', t.dataset.type);
         e.dataTransfer.setData('key', t.dataset.key || '');
-        e.dataTransfer.setData('function', t.dataset.function || '');
-      });
+        const func = t.dataset.function || '';
+        e.dataTransfer.setData('function', func);
+      };
     });
-    document.querySelectorAll('.part').forEach((p) => {
-      // Ensure the part is the coordinate reference
-      p.style.position = 'relative';
+  },
 
+  setupDropZones() {
+    document.querySelectorAll('.part').forEach((p) => {
       p.ondragover = (e) => e.preventDefault();
       p.ondrop = (e) => {
         e.preventDefault();
-
         const rect = p.getBoundingClientRect();
-
-        let x = e.clientX - rect.left;
-        let y = e.clientY - rect.top;
-
-        // Adjust for the fact that the mouse is usually in the middle of the dragged ghost image
-        const dropX = Math.round(x - 70);
-        const dropY = Math.round(y - 14);
-
-        const type_raw = e.dataTransfer.getData('type');
-        const key = e.dataTransfer.getData('key');
-        const func = e.dataTransfer.getData('function');
-
-        app.createElement(
-          p,
-          dropX < 0 ? 0 : dropX,
-          dropY < 0 ? 0 : dropY,
-          type_raw,
-          key || null,
-          null,
-          func || null
-        );
+        Renderer.createCanvasElement(p, {
+          x: Math.round(e.clientX - rect.left - 75),
+          y: Math.round(e.clientY - rect.top - 11),
+          type: e.dataTransfer.getData('type'),
+          key: e.dataTransfer.getData('key'),
+          function: e.dataTransfer.getData('function'),
+        });
       };
     });
   },
 
-  createElement(
-    parent,
-    x,
-    y,
-    type,
-    key,
-    content,
-    func,
-    width = 150,
-    height = 22,
-    savedField = null
-  ) {
-    const el = document.createElement('div');
-    el.className = 'canvas-element' + (type === 'label' ? ' is-label' : '');
-    el.style.width = width + 'px';
-    el.style.height = height + 'px';
-    el.style.transform = `translate(${x}px,${y}px)`;
-    el.dataset.x = x;
-    el.dataset.y = y;
-    el.dataset.type = type;
-
-    if (key) el.dataset.key = key;
-    if (func) el.dataset.function = func;
-
-    const c = document.createElement('div');
-    c.className = 'element-content';
-    c.style.flex = '1';
-
-    if (type === 'calculation') {
-      const select = document.createElement('select');
-      select.style.width = '100%';
-      select.innerHTML =
-        `<option value="">--select field--</option>` +
-        Object.keys(this.data[0])
-          .map((k) => `<option value="${k}">${k}</option>`)
-          .join('');
-
-      const result = document.createElement('div');
-      result.className = 'calc-result';
-      result.style.fontSize = '12px';
-
-      const runCalculation = (field) => {
-        el.dataset.field = field;
-        if (!field) {
-          result.textContent = '';
-          return;
-        }
-        const vals = this.data.map((r) => Number(r[field] || 0));
-        let res = 0;
-        if (func === 'SUM') res = vals.reduce((a, b) => a + b, 0);
-        if (func === 'AVG') res = vals.reduce((a, b) => a + b, 0) / vals.length;
-        result.textContent = `${func}(${field}) = ${res}`;
-      };
-
-      select.addEventListener('change', (e) => runCalculation(e.target.value));
-
-      // If loading from JSON, pre-set the value and run calc
-      if (savedField) {
-        select.value = savedField;
-        runCalculation(savedField);
-      }
-
-      c.append(select, result);
-    } else if (type === 'label') {
-      c.contentEditable = true;
-      c.textContent = content || 'Text';
-    } else if (type === 'field') {
-      c.textContent = `[${key}]`;
-    }
-
-    const h = document.createElement('div');
-    h.className = 'drag-handle';
-    h.textContent = '⋮⋮';
-    el.append(h, c);
-
-    el.addEventListener('click', (e) => {
-      e.stopPropagation();
-      if (this.selectedElement) this.selectedElement.style.outline = '';
-      this.selectedElement = el;
-      el.style.outline = '2px dashed red';
-    });
-
-    parent.appendChild(el);
+  // ... [Keep selectElement, saveSchema, generatePreview, setupPartResizing, setupKeyboardListeners, setupSidebarToggles exactly as they were]
+  selectElement(el, e) {
+    e.stopPropagation();
+    if (Store.selectedElement) Store.selectedElement.style.outline = '';
+    Store.selectedElement = el;
+    el.style.outline = '2px dashed red';
   },
 
-  setupInteract() {
-    interact('.drag-handle').draggable({
-      inertia: false,
+  saveSchema() {
+    const schema = ReportEngine.getSchema();
+    const blob = new Blob([JSON.stringify(schema, null, 2)], {
+      type: 'application/json',
+    });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'report_schema.json';
+    a.click();
+  },
+
+  generatePreview() {
+    if (!Store.data.length) return alert('No data loaded');
+    const s = ReportEngine.getSchema();
+    const out = document.getElementById('preview-content');
+    out.innerHTML = '';
+    document.getElementById('preview-modal').style.display = 'flex';
+
+    const previewPage = document.createElement('div');
+    ['header', 'body', 'footer'].forEach((pName) => {
+      const pDef = s.parts[pName];
+      if (!pDef) return;
+
+      const renderPart = (row = null) => {
+        const div = document.createElement('div');
+        div.className = `r-part-${pName}`;
+        div.style.height = pDef.height + 'px';
+        div.style.position = 'relative';
+
+        pDef.elements.forEach((e) => {
+          const el = document.createElement('div');
+          el.className = 'r-element';
+          Object.assign(el.style, {
+            left: e.x + 'px',
+            top: e.y + 'px',
+            width: e.w + 'px',
+            height: e.h + 'px',
+          });
+          if (e.type === 'field' && row) el.textContent = row[e.key];
+          else if (e.type === 'calculation')
+            el.textContent = ReportEngine.calculate(e.function, e.field);
+          else el.textContent = e.content;
+          div.appendChild(el);
+        });
+        return div;
+      };
+
+      if (pName === 'body')
+        Store.data.forEach((row) => previewPage.appendChild(renderPart(row)));
+      else previewPage.appendChild(renderPart());
+    });
+    out.appendChild(previewPage);
+  },
+
+  setupPartResizing() {
+    interact('.part').resizable({
+      edges: { bottom: true },
       listeners: {
-        start: (e) => {
-          const el = e.target.parentElement;
-          const rect = el.getBoundingClientRect();
-          el._dragData = {
-            startParent: el.parentElement,
-            pageX: rect.left,
-            pageY: rect.top,
-            width: rect.width,
-            height: rect.height,
-          };
-          document.body.appendChild(el);
-          el.style.position = 'fixed';
-          el.style.left = rect.left + 'px';
-          el.style.top = rect.top + 'px';
-          el.style.transform = 'none';
-          el.style.zIndex = 10000;
-        },
-        move: (e) => {
-          const el = e.target.parentElement;
-          el._dragData.pageX += e.dx;
-          el._dragData.pageY += e.dy;
-          el.style.left = el._dragData.pageX + 'px';
-          el.style.top = el._dragData.pageY + 'px';
-        },
-        end: (e) => {
-          const el = e.target.parentElement;
-          const centerX = el._dragData.pageX + el._dragData.width / 2;
-          const centerY = el._dragData.pageY + el._dragData.height / 2;
-          const parts = ['part-header', 'part-body', 'part-footer']
-            .map((id) => document.getElementById(id))
-            .filter(Boolean);
-
-          let target = el._dragData.startParent;
-          for (const p of parts) {
-            const r = p.getBoundingClientRect();
-            if (
-              centerX >= r.left &&
-              centerX <= r.right &&
-              centerY >= r.top &&
-              centerY <= r.bottom
-            ) {
-              target = p;
-              break;
-            }
-          }
-
-          const pr = target.getBoundingClientRect();
-          let newX = Math.max(
-            0,
-            Math.min(
-              centerX - pr.left - el._dragData.width / 2,
-              target.clientWidth - el._dragData.width
-            )
-          );
-          let newY = Math.max(
-            0,
-            Math.min(
-              centerY - pr.top - el._dragData.height / 2,
-              target.clientHeight - el._dragData.height
-            )
-          );
-
-          target.appendChild(el);
-          el.style.position = 'absolute';
-          el.style.left = '';
-          el.style.top = '';
-          el.style.transform = `translate(${Math.round(newX)}px,${Math.round(
-            newY
-          )}px)`;
-          el.dataset.x = Math.round(newX);
-          el.dataset.y = Math.round(newY);
-          el.style.zIndex = '';
-          delete el._dragData;
+        move(e) {
+          e.target.style.height = e.rect.height + 'px';
         },
       },
     });
@@ -240,222 +329,100 @@ const app = {
     interact('.canvas-element').resizable({
       edges: { left: true, right: true, bottom: true, top: true },
       listeners: {
-        move: (event) => {
-          const t = event.target;
-          let x = parseFloat(t.dataset.x) || 0;
-          let y = parseFloat(t.dataset.y) || 0;
-          t.style.width = event.rect.width + 'px';
-          t.style.height = event.rect.height + 'px';
-          x += event.deltaRect.left;
-          y += event.deltaRect.top;
-          t.style.transform = `translate(${x}px,${y}px)`;
-          t.dataset.x = x;
-          t.dataset.y = y;
+        move(e) {
+          const t = e.target;
+          let x = (parseFloat(t.dataset.x) || 0) + e.deltaRect.left;
+          let y = (parseFloat(t.dataset.y) || 0) + e.deltaRect.top;
+          Object.assign(t.style, {
+            width: e.rect.width + 'px',
+            height: e.rect.height + 'px',
+            transform: `translate(${x}px,${y}px)`,
+          });
+          Object.assign(t.dataset, { x, y });
+        },
+      },
+    });
+
+    interact('.drag-handle').draggable({
+      listeners: {
+        start(e) {
+          const el = e.target.parentElement;
+          const r = el.getBoundingClientRect();
+          el._dragData = {
+            startParent: el.parentElement,
+            px: r.left,
+            py: r.top,
+            w: r.width,
+            h: r.height,
+          };
+          document.body.appendChild(el);
+          Object.assign(el.style, {
+            position: 'fixed',
+            left: r.left + 'px',
+            top: r.top + 'px',
+            transform: 'none',
+            zIndex: 1000,
+          });
+        },
+        move(e) {
+          const el = e.target.parentElement;
+          el._dragData.px += e.dx;
+          el._dragData.py += e.dy;
+          el.style.left = el._dragData.px + 'px';
+          el.style.top = el._dragData.py + 'px';
+        },
+        end(e) {
+          const el = e.target.parentElement;
+          const cx = el._dragData.px + el._dragData.w / 2;
+          const cy = el._dragData.py + el._dragData.h / 2;
+          const targetPart =
+            ['header', 'body', 'footer']
+              .map((id) => document.getElementById('part-' + id))
+              .find((p) => {
+                const r = p.getBoundingClientRect();
+                return (
+                  cx >= r.left && cx <= r.right && cy >= r.top && cy <= r.bottom
+                );
+              }) || el._dragData.startParent;
+
+          const tr = targetPart.getBoundingClientRect();
+          const nx = Math.round(cx - tr.left - el._dragData.w / 2);
+          const ny = Math.round(cy - tr.top - el._dragData.h / 2);
+          targetPart.appendChild(el);
+          Object.assign(el.style, {
+            position: 'absolute',
+            left: '0',
+            top: '0',
+            transform: `translate(${nx}px,${ny}px)`,
+            zIndex: '',
+          });
+          Object.assign(el.dataset, { x: nx, y: ny });
         },
       },
     });
   },
 
-  setupKeep() {
-    ['header', 'body', 'footer'].forEach((p) => {
-      document.getElementById('keep-' + p).onchange = (e) => {
-        document.getElementById('part-' + p).style.display = e.target.checked
-          ? ''
-          : 'none';
-      };
-    });
-  },
-
-  getSchema() {
-    const s = { parts: {} };
-    ['header', 'body', 'footer'].forEach((p) => {
-      const partEl = document.getElementById('part-' + p);
-      if (partEl.style.display === 'none') return;
-      s.parts[p] = {
-        height: partEl.offsetHeight,
-        elements: [...partEl.querySelectorAll('.canvas-element')].map((e) => {
-          const type = e.dataset.type;
-          let content = '';
-          if (type === 'calculation') {
-            content = e.querySelector('.calc-result')?.textContent || '';
-          } else {
-            content =
-              e.querySelector('.element-content')?.textContent.trim() || '';
-          }
-          return {
-            type: type,
-            key: e.dataset.key,
-            content: content,
-            x: +e.dataset.x,
-            y: +e.dataset.y,
-            w: parseFloat(e.style.width),
-            h: parseFloat(e.style.height),
-            function: e.dataset.function,
-            field: e.dataset.field,
-          };
-        }),
-      };
-    });
-    return s;
-  },
-
-  saveSchema() {
-    const schema = this.getSchema();
-    const json = JSON.stringify(schema, null, 2);
-
-    const blob = new Blob([json], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'schema.json';
-    document.body.appendChild(a);
-    a.click();
-
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-  },
-  loadFromPrompt() {
-    if (!this.data.length) {
-      alert('Load fields first !');
-      return;
-    }
-    const raw = prompt('Paste your JSON schema here:');
-    if (!raw) return;
-
-    try {
-      const json = JSON.parse(raw);
-      this.loadSchema(json);
-    } catch (e) {
-      alert('Invalid JSON format.');
-    }
-  },
-
-  loadSchema(schema) {
-    // Clear existing UI elements
-    document.querySelectorAll('.canvas-element').forEach((el) => el.remove());
-
-    Object.keys(schema.parts).forEach((partKey) => {
-      const partData = schema.parts[partKey];
-      const partEl = document.getElementById('part-' + partKey);
-      if (!partEl) return;
-
-      partEl.style.height = partData.height + 'px';
-      partData.elements.forEach((el) => {
-        this.createElement(
-          partEl,
-          el.x,
-          el.y,
-          el.type,
-          el.key,
-          el.content,
-          el.function,
-          el.w,
-          el.h,
-          el.field
-        );
-      });
-    });
-  },
-
-  renderElement(def, row) {
-    const d = document.createElement('div');
-    d.className = 'r-element';
-    d.style.left = def.x + 'px';
-    d.style.top = def.y + 'px';
-    d.style.width = def.w + 'px';
-    d.style.height = def.h + 'px';
-
-    if (def.type === 'field' && row) {
-      d.textContent = row[def.key];
-    } else if (def.type === 'calculation' && def.field) {
-      const vals = this.data.map((r) => parseFloat(r[def.field] || 0));
-      let res = 0;
-      if (def.function === 'SUM') res = vals.reduce((a, b) => a + b, 0);
-      else if (def.function === 'AVG')
-        res = vals.reduce((a, b) => a + b, 0) / vals.length;
-      d.textContent = `${res}`;
-    } else {
-      d.textContent = def.content;
-    }
-    return d;
-  },
-
-  generatePreview() {
-    if (!this.data.length) {
-      alert('No data');
-      return;
-    }
-    const s = this.getSchema();
-    const out = document.getElementById('preview-content');
-    out.innerHTML = '';
-    document.getElementById('preview-modal').style.display = 'flex';
-    const page = document.createElement('div');
-
-    ['header', 'body', 'footer'].forEach((partName) => {
-      if (!s.parts[partName]) return;
-      if (partName === 'body') {
-        this.data.forEach((row) => {
-          const b = document.createElement('div');
-          b.className = 'r-part-body';
-          b.style.height = s.parts.body.height + 'px';
-          s.parts.body.elements.forEach((e) =>
-            b.appendChild(this.renderElement(e, row))
-          );
-          page.appendChild(b);
-        });
-      } else {
-        const p = document.createElement('div');
-        p.className = `r-part-${partName}`;
-        p.style.height = s.parts[partName].height + 'px';
-        s.parts[partName].elements.forEach((e) =>
-          p.appendChild(this.renderElement(e))
-        );
-        page.appendChild(p);
+  setupKeyboardListeners() {
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Delete' && Store.selectedElement) {
+        Store.selectedElement.remove();
+        Store.selectedElement = null;
       }
     });
-    out.appendChild(page);
   },
-  async loadDataFromAPI() {
-    try {
-      const res = await fetch('http://localhost:8000/demoJSON/layoutJSON.json');
-      if (!res.ok) throw new Error('API failed');
 
-      this.data = await res.json();
-
-      // rebuild fields
-      const list = document.getElementById('fields-list');
-      list.innerHTML = '';
-      this.buildFields();
-
-      // rebind drag after dynamic DOM creation
-      this.setupDnD();
-    } catch (err) {
-      console.error(err);
-      alert('Failed to load data');
-    }
+  setupSidebarToggles() {
+    ['header', 'body', 'footer'].forEach((p) => {
+      const cb = document.getElementById('keep-' + p);
+      if (cb)
+        cb.onchange = (e) => {
+          document.getElementById('part-' + p).style.display = e.target.checked
+            ? ''
+            : 'none';
+        };
+    });
   },
 };
 
-// Part resizing logic
-['part-header', 'part-body', 'part-footer'].forEach((id) => {
-  const el = document.getElementById(id);
-  interact(el).resizable({
-    edges: { bottom: true },
-    listeners: {
-      move(event) {
-        event.target.style.height = event.rect.height + 'px';
-      },
-    },
-    modifiers: [interact.modifiers.restrictSize({ min: { height: 30 } })],
-  });
-});
-
-document.addEventListener('keydown', (e) => {
-  if (e.key === 'Delete' && app.selectedElement) {
-    app.selectedElement.remove();
-    app.selectedElement = null;
-  }
-});
-
-app.init();
+Actions.init();
+window.app = Actions;
