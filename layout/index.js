@@ -2,7 +2,8 @@
  * 1. STATE & DATA STORE
  */
 const Store = {
-  data: [],
+  data: [], // Full row data (loaded only on preview)
+  headers: [], // Column names (loaded on startup)
   selectedElement: null,
 };
 
@@ -11,7 +12,8 @@ const Store = {
  */
 const ReportEngine = {
   calculate(funcName, fieldName) {
-    if (!fieldName || !funcName || Store.data.length === 0) return 0;
+    // If we are in design mode and haven't fetched full data yet
+    if (Store.data.length === 0) return '...';
 
     const vals = Store.data.map((r) => Number(r[fieldName] || 0));
     let res = 0;
@@ -35,11 +37,14 @@ const ReportEngine = {
           const type = e.dataset.type;
           let cleanContent = '';
 
+          // FIX: Don't grab the result text for calculations
           if (type === 'calculation') {
-            cleanContent = e.querySelector('.calc-result')?.textContent || '';
-          } else {
+            cleanContent = ''; // Keep content empty, use 'function' and 'field' keys instead
+          } else if (type === 'label') {
             cleanContent =
               e.querySelector('.element-content')?.textContent.trim() || '';
+          } else {
+            cleanContent = `[${e.dataset.key}]`;
           }
 
           return {
@@ -100,7 +105,6 @@ const Renderer = {
 
     el.append(handle, contentDiv);
     el.addEventListener('click', (e) => Actions.selectElement(el, e));
-
     parent.appendChild(el);
   },
 
@@ -108,10 +112,11 @@ const Renderer = {
     const select = document.createElement('select');
     select.style.width = '100%';
 
-    const fields = Store.data.length > 0 ? Object.keys(Store.data[0]) : [];
+    // Use headers if available, otherwise data keys
+    const options = Store.headers.length > 0 ? Store.headers : [];
     select.innerHTML =
       `<option value="">--select field--</option>` +
-      fields.map((k) => `<option value="${k}">${k}</option>`).join('');
+      options.map((k) => `<option value="${k}">${k}</option>`).join('');
 
     const resultDisplay = document.createElement('div');
     resultDisplay.className = 'calc-result';
@@ -120,19 +125,16 @@ const Renderer = {
     const update = (selectedField) => {
       el.dataset.field = selectedField;
       const res = ReportEngine.calculate(funcName, selectedField);
-      const label = funcName || 'CALC';
       resultDisplay.textContent = selectedField
-        ? `${label}(${selectedField}) = ${res}`
+        ? `${funcName || 'CALC'}(${selectedField}) = ${res}`
         : '';
     };
 
     select.addEventListener('change', (e) => update(e.target.value));
-
     if (savedField) {
       select.value = savedField;
       update(savedField);
     }
-
     container.append(select, resultDisplay);
   },
 };
@@ -146,47 +148,31 @@ const Actions = {
     this.setupKeyboardListeners();
     this.setupSidebarToggles();
     this.setupDropZones();
-
-    // Start loading data immediately on reload
-    this.loadDataFromAPI();
+    this.loadHeaders(); // Step 1: Initial Load
   },
 
-  async loadDataFromAPI() {
+  // Step 1: Load Column names for design
+  async loadHeaders() {
     const list = document.getElementById('fields-list');
+    list.innerHTML = '<div class="loading-text">Loading fields...</div>';
 
-    try {
-      // Show loading text immediately
-      list.innerHTML = '<div class="loading-text">Loading fields...</div>';
-
-      const res = await fetch('http://localhost:8000/demoJSON/layoutJSON.json');
-      const jsonData = await res.json();
-
-      Store.data = jsonData;
-
-      // Only stop loading if data exists
-      if (Store.data && Store.data.length > 0) {
+    setTimeout(async () => {
+      try {
+        const res = await fetch(
+          'http://localhost:8000/demoJSON/layoutHeaderJSON.json'
+        );
+        Store.headers = await res.json();
         this.refreshToolbox();
-        this.refreshCalculations();
-      } else {
-        list.innerHTML = '<div class="loading-text">No data found.</div>';
+      } catch (err) {
+        list.innerHTML = '<div style="color:red">Header Load Failed</div>';
       }
-    } catch (err) {
-      list.innerHTML =
-        '<div class="loading-text" style="color:red">Failed to load data.</div>';
-      console.error('API failed:', err);
-    }
+    }, 1200); // Simulated delay
   },
 
   refreshToolbox() {
     const list = document.getElementById('fields-list');
-    list.innerHTML = ''; // This stops the loading state
-
-    if (!Store.data || Store.data.length === 0) return;
-
-    // Optimized: Only get keys from the first row
-    const keys = Object.keys(Store.data[0]);
-
-    keys.forEach((k) => {
+    list.innerHTML = '';
+    Store.headers.forEach((k) => {
       const d = document.createElement('div');
       d.className = 'tool-item';
       d.draggable = true;
@@ -195,35 +181,72 @@ const Actions = {
       d.textContent = k;
       list.appendChild(d);
     });
-
     this.bindNativeDrag();
   },
 
-  refreshCalculations() {
-    document
-      .querySelectorAll('.canvas-element[data-type="calculation"]')
-      .forEach((el) => {
-        const select = el.querySelector('select');
-        const func = el.dataset.function;
-        const field = el.dataset.field;
+  // Step 2: Load Whole Data for Preview
+  async generatePreview() {
+    const out = document.getElementById('preview-content');
+    const modal = document.getElementById('preview-modal');
+    const schema = ReportEngine.getSchema();
 
-        if (select && select.options.length <= 1) {
-          select.innerHTML =
-            `<option value="">--select field--</option>` +
-            Object.keys(Store.data[0] || {})
-              .map((k) => `<option value="${k}">${k}</option>`)
-              .join('');
-          select.value = field || '';
-        }
+    modal.style.display = 'flex';
+    out.innerHTML =
+      '<div class="loading-text" style="text-align:center; width:100%; margin-top:50px;">Calculating report data...</div>';
 
-        const resDiv = el.querySelector('.calc-result');
-        if (resDiv && field) {
-          resDiv.textContent = `${func}(${field}) = ${ReportEngine.calculate(
-            func,
-            field
-          )}`;
-        }
-      });
+    setTimeout(async () => {
+      try {
+        const res = await fetch(
+          'http://localhost:8000/demoJSON/layoutJSON.json'
+        );
+        Store.data = await res.json();
+        this.renderPreviewHTML(schema, out);
+      } catch (err) {
+        out.innerHTML =
+          '<div style="color:red">Error loading full dataset.</div>';
+      }
+    }, 1200); // Simulated delay
+  },
+
+  renderPreviewHTML(s, container) {
+    container.innerHTML = '';
+    const previewPage = document.createElement('div');
+
+    ['header', 'body', 'footer'].forEach((pName) => {
+      const pDef = s.parts[pName];
+      if (!pDef) return;
+
+      const renderPart = (row = null) => {
+        const div = document.createElement('div');
+        div.className = `r-part-${pName}`;
+        div.style.height = pDef.height + 'px';
+        div.style.position = 'relative';
+
+        pDef.elements.forEach((e) => {
+          const el = document.createElement('div');
+          el.className = 'r-element';
+          Object.assign(el.style, {
+            left: e.x + 'px',
+            top: e.y + 'px',
+            width: e.w + 'px',
+            height: e.h + 'px',
+          });
+
+          if (e.type === 'field' && row) el.textContent = row[e.key];
+          else if (e.type === 'calculation')
+            el.textContent = ReportEngine.calculate(e.function, e.field);
+          else el.textContent = e.content;
+
+          div.appendChild(el);
+        });
+        return div;
+      };
+
+      if (pName === 'body')
+        Store.data.forEach((row) => previewPage.appendChild(renderPart(row)));
+      else previewPage.appendChild(renderPart());
+    });
+    container.appendChild(previewPage);
   },
 
   bindNativeDrag() {
@@ -231,8 +254,7 @@ const Actions = {
       t.ondragstart = (e) => {
         e.dataTransfer.setData('type', t.dataset.type);
         e.dataTransfer.setData('key', t.dataset.key || '');
-        const func = t.dataset.function || '';
-        e.dataTransfer.setData('function', func);
+        e.dataTransfer.setData('function', t.dataset.function || '');
       };
     });
   },
@@ -254,66 +276,11 @@ const Actions = {
     });
   },
 
-  // ... [Keep selectElement, saveSchema, generatePreview, setupPartResizing, setupKeyboardListeners, setupSidebarToggles exactly as they were]
   selectElement(el, e) {
     e.stopPropagation();
     if (Store.selectedElement) Store.selectedElement.style.outline = '';
     Store.selectedElement = el;
     el.style.outline = '2px dashed red';
-  },
-
-  saveSchema() {
-    const schema = ReportEngine.getSchema();
-    const blob = new Blob([JSON.stringify(schema, null, 2)], {
-      type: 'application/json',
-    });
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = 'report_schema.json';
-    a.click();
-  },
-
-  generatePreview() {
-    if (!Store.data.length) return alert('No data loaded');
-    const s = ReportEngine.getSchema();
-    const out = document.getElementById('preview-content');
-    out.innerHTML = '';
-    document.getElementById('preview-modal').style.display = 'flex';
-
-    const previewPage = document.createElement('div');
-    ['header', 'body', 'footer'].forEach((pName) => {
-      const pDef = s.parts[pName];
-      if (!pDef) return;
-
-      const renderPart = (row = null) => {
-        const div = document.createElement('div');
-        div.className = `r-part-${pName}`;
-        div.style.height = pDef.height + 'px';
-        div.style.position = 'relative';
-
-        pDef.elements.forEach((e) => {
-          const el = document.createElement('div');
-          el.className = 'r-element';
-          Object.assign(el.style, {
-            left: e.x + 'px',
-            top: e.y + 'px',
-            width: e.w + 'px',
-            height: e.h + 'px',
-          });
-          if (e.type === 'field' && row) el.textContent = row[e.key];
-          else if (e.type === 'calculation')
-            el.textContent = ReportEngine.calculate(e.function, e.field);
-          else el.textContent = e.content;
-          div.appendChild(el);
-        });
-        return div;
-      };
-
-      if (pName === 'body')
-        Store.data.forEach((row) => previewPage.appendChild(renderPart(row)));
-      else previewPage.appendChild(renderPart());
-    });
-    out.appendChild(previewPage);
   },
 
   setupPartResizing() {
@@ -421,6 +388,66 @@ const Actions = {
             : 'none';
         };
     });
+  },
+  loadFromPrompt() {
+    if (Store.headers.length === 0) {
+      return alert('Please wait for design fields to load.');
+    }
+
+    const raw = prompt('Paste JSON:');
+    if (!raw) return;
+
+    try {
+      const schema = JSON.parse(raw);
+
+      // 1. Reset Everything First: Uncheck all and hide all parts
+      ['header', 'body', 'footer'].forEach((pk) => {
+        const partEl = document.getElementById('part-' + pk);
+        const cb = document.getElementById('keep-' + pk);
+
+        if (partEl) partEl.style.display = 'none';
+        if (cb) cb.checked = false;
+
+        // Clear elements from every part
+        if (partEl)
+          partEl
+            .querySelectorAll('.canvas-element')
+            .forEach((el) => el.remove());
+      });
+
+      // 2. Enable only the parts found in the JSON
+      Object.keys(schema.parts).forEach((pk) => {
+        const partEl = document.getElementById('part-' + pk);
+        const cb = document.getElementById('keep-' + pk);
+
+        if (!partEl) return;
+
+        // Show part and check the box
+        partEl.style.display = '';
+        if (cb) cb.checked = true;
+
+        // Set the height from JSON
+        partEl.style.height = schema.parts[pk].height + 'px';
+
+        // Reconstruct elements
+        schema.parts[pk].elements.forEach((elDef) => {
+          Renderer.createCanvasElement(partEl, elDef);
+        });
+      });
+    } catch (e) {
+      alert('Invalid JSON');
+      console.error(e);
+    }
+  },
+  saveSchema() {
+    const schema = ReportEngine.getSchema();
+    const blob = new Blob([JSON.stringify(schema, null, 2)], {
+      type: 'application/json',
+    });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'report_schema.json';
+    a.click();
   },
 };
 
