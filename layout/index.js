@@ -9,9 +9,11 @@ const app = {
     this.setupKeep();
   },
   buildFields() {
+    const list = document.getElementById('fields-list');
+    list.innerHTML = '';
+
     if (!this.data.length) return;
 
-    const list = document.getElementById('fields-list');
     Object.keys(this.data[0]).forEach((k) => {
       const d = document.createElement('div');
       d.className = 'tool-item';
@@ -22,8 +24,12 @@ const app = {
       list.appendChild(d);
     });
   },
-
   setupDnD() {
+    // remove old listeners safely
+    document.querySelectorAll('.tool-item').forEach((t) => {
+      t.replaceWith(t.cloneNode(true));
+    });
+    // re-select after clone
     document.querySelectorAll('.tool-item').forEach((t) => {
       t.addEventListener('dragstart', (e) => {
         e.dataTransfer.setData('type', t.dataset.type);
@@ -31,7 +37,6 @@ const app = {
         e.dataTransfer.setData('function', t.dataset.function || '');
       });
     });
-
     document.querySelectorAll('.part').forEach((p) => {
       // Ensure the part is the coordinate reference
       p.style.position = 'relative';
@@ -58,9 +63,9 @@ const app = {
           dropX < 0 ? 0 : dropX,
           dropY < 0 ? 0 : dropY,
           type_raw,
-          key,
-          type_raw === 'calculation' ? func : key,
-          func
+          key || null,
+          null,
+          func || null
         );
       };
     });
@@ -311,8 +316,13 @@ const app = {
     URL.revokeObjectURL(url);
   },
   loadFromPrompt() {
+    if (!this.data.length) {
+      alert('Load fields first !');
+      return;
+    }
     const raw = prompt('Paste your JSON schema here:');
     if (!raw) return;
+
     try {
       const json = JSON.parse(raw);
       this.loadSchema(json);
@@ -372,6 +382,10 @@ const app = {
   },
 
   generatePreview() {
+    if (!this.data.length) {
+      alert('No data');
+      return;
+    }
     const s = this.getSchema();
     const out = document.getElementById('preview-content');
     out.innerHTML = '';
