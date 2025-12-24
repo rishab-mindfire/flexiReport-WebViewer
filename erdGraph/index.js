@@ -79,14 +79,9 @@ function buildTableHtml(table) {
 
   const showMoreButton =
     fields.length > 5
-      ? `<button class="show-more" aria-expanded="${!collapsed}" title="Show more fields" tabindex="0" type="button">
-        <span class="show-more-text">${
-          collapsed ? 'Show more' : 'Show less'
-        }</span>
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-          <path d="M6 9l6 6 6-6" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-        </svg>
-      </button>`
+      ? `<button class="show-more" aria-expanded="${!collapsed}" title="Toggle fields" tabindex="0" type="button" aria-label="Toggle fields">\n        <span class="show-more-icon">${
+          collapsed ? '\u25BC' : '\u25B2'
+        }</span>\n      </button>`
       : '';
 
   return `
@@ -286,8 +281,8 @@ function addTableNode(table) {
         if (btn) {
           btn.setAttribute('aria-expanded', expanded ? 'true' : 'false');
           btn.classList.toggle('expanded', expanded);
-          const txt = btn.querySelector('.show-more-text');
-          if (txt) txt.textContent = expanded ? 'Show less' : 'Show more';
+          const icon = btn.querySelector('.show-more-icon');
+          if (icon) icon.textContent = expanded ? '\u25B2' : '\u25BC';
         }
         const newVisible = expanded ? table.fields.length : 5;
         const newHeight = HEADER_HEIGHT + newVisible * FIELD_HEIGHT + 10;
@@ -888,7 +883,7 @@ document.getElementById('btnExport').addEventListener('click', () => {
 // demo api json call for graph
 // ----------------------------------
 document.getElementById('btnLoadDemo').addEventListener('click', () => {
-  fetch('http://localhost:8000/demoJSON/demo.json')
+  fetch('http://localhost:8000/demoJSON/erdJSON.json')
     .then((res) => res.json())
     .then((jsonData) => {
       currentGraphData = JSON.parse(JSON.stringify(jsonData));

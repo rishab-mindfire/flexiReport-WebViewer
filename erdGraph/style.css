@@ -145,7 +145,7 @@ body {
   box-sizing: border-box;
 }
 .er-title {
-  font-size: 13px;
+  font-size: 18px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -183,10 +183,13 @@ body {
   transform: rotate(180deg);
 }
 
-.er-header .show-more .show-more-text {
-  font-size: 12px;
+.er-header .show-more .show-more-icon {
+  font-size: 14px;
   color: #fff;
-  margin-right: 6px;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .er-field.extra-field.hidden {
@@ -203,16 +206,15 @@ body {
   border: none;
   color: #e24c4c;
   cursor: pointer;
-  font-size: 24px;
+  font-size: 16px; /* reduced size */
+  width: 28px;
+  height: 28px;
+  padding: 0;
   border-radius: 4px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  transition: background 0.15s ease, color 0.15s ease;
-}
-
-.btn-delete:hover {
-  background: rgba(255, 255, 255, 0.18);
+  line-height: 1;
   color: rgb(207, 4, 4);
 }
 
