@@ -24,9 +24,9 @@ let currentGraphData = { tables: [], links: [] };
 // ----------------------------------
 // Constants
 // ----------------------------------
-const FIELD_HEIGHT = 22;
+const FIELD_HEIGHT = 36;
 const HEADER_HEIGHT = 42;
-const PORT_TOP_MARGIN = 10;
+const PORT_TOP_MARGIN = FIELD_HEIGHT / 2;
 
 // ----------------------------------
 // Graph Initialization
@@ -63,18 +63,40 @@ const graph = new Graph({
 // Build HTML
 // ----------------------------------
 function buildTableHtml(table) {
+  const fields = table.fields || [];
+  const collapsed =
+    table.collapsed === undefined ? fields.length > 5 : table.collapsed;
+
+  const fieldsHtml = fields
+    .map((f, i) => {
+      const extra = i >= 5 ? ' extra-field' : '';
+      const hidden = collapsed && i >= 5 ? ' hidden' : '';
+      return `<div class="er-field${extra}${hidden} ${
+        table.baseTableKey == f.name ? 'base-tableKey' : ''
+      }" data-name="${f.id || f.name}">${f.name}</div>`;
+    })
+    .join('');
+
+  const showMoreButton =
+    fields.length > 5
+      ? `<button class="show-more" aria-expanded="${!collapsed}" title="Toggle fields" tabindex="0" type="button" aria-label="Toggle fields">\n        <span class="show-more-icon">${
+          collapsed ? '\u25BC' : '\u25B2'
+        }</span>\n      </button>`
+      : '';
+
   return `
-    <div class="er-table ${table.baseTable ? 'base-table' : ''}">
-      <div class="er-header">${table.name}</div>
+    <div class="er-table ${
+      table.baseTable ? 'base-table' : ''
+    }" data-node-id="${table.id}">
+      <div class="er-header">
+        <span class="er-title">${table.name}</span>
+        <span class="">
+         ${showMoreButton}
+         <button class="btn-delete">X</button>
+        </span>
+      </div>
       <div class="er-fields-container">
-        ${(table.fields || [])
-          .map(
-            (f) =>
-              `<div class="er-field" data-name="${f.id || f.name}">${
-                f.name
-              }</div>`
-          )
-          .join('')}
+        ${fieldsHtml}
       </div>
     </div>`;
 }
@@ -124,8 +146,95 @@ function makePortsForTable(table) {
   });
 }
 
+// Toggle visibility and interactivity of per-field ports for a specific table
+function togglePortsVisibility(tableId, table, expanded) {
+  const node = graph.getCell(tableId);
+  const fieldIds = (table.fields || []).map((f) => f.id || f.name);
+
+  // Helper to set a port attr if API is available
+  const setPortAttr = (portId, path, value) => {
+    try {
+      if (typeof node.setPortProp === 'function') {
+        node.setPortProp(portId, path, value);
+        return true;
+      }
+      if (typeof node.portProp === 'function') {
+        node.portProp(portId, path, value);
+        return true;
+      }
+    } catch (e) {}
+    return false;
+  };
+
+  // For each field after the first 5, hide/show their ports
+  fieldIds.forEach((fid, i) => {
+    if (i < 5) return; // only affect extra fields
+
+    const leftPortId = `${tableId}.L.${fid}`;
+    const rightPortId = `${tableId}.R.${fid}`;
+    [leftPortId, rightPortId].forEach((pid) => {
+      // If port doesn't exist on this table (e.g., base table left ports), ignore
+      try {
+        // Try the API first
+        let applied = false;
+        applied =
+          setPortAttr(pid, 'attrs/circle/display', expanded ? null : 'none') ||
+          applied;
+        applied =
+          setPortAttr(
+            pid,
+            'attrs/circle/pointerEvents',
+            expanded ? null : 'none'
+          ) || applied;
+        applied =
+          setPortAttr(pid, 'attrs/circle/opacity', expanded ? null : 0) ||
+          applied;
+
+        if (!applied) {
+          // Fallback: try to find the port element in the node's DOM and hide/show it
+          const nodeEl = container.querySelector(`[data-node-id="${tableId}"]`);
+          if (!nodeEl) return;
+
+          // Try multiple attribute selectors that X6 might use
+          const selectors = [
+            `[data-portid="${pid}"]`,
+            `[data-port-id="${pid}"]`,
+            `[data-port="${pid}"]`,
+          ];
+          selectors.forEach((sel) => {
+            const portEls = nodeEl.querySelectorAll(sel);
+            portEls.forEach((portEl) => {
+              const circle = portEl.querySelector('circle');
+              if (circle) {
+                circle.style.display = expanded ? '' : 'none';
+                circle.style.pointerEvents = expanded ? '' : 'none';
+                circle.style.opacity = expanded ? '' : '0';
+              }
+
+              // Additionally, hide the port wrapper if exists
+              portEl.style.display = expanded ? '' : 'none';
+            });
+          });
+        }
+      } catch (e) {
+        // ignore per-port errors
+        console.log('error in port congiguration', e);
+      }
+    });
+  });
+}
+
 function addTableNode(table) {
-  const height = HEADER_HEIGHT + (table.fields?.length || 1) * 36 + 10;
+  // default collapsed state when there are more than 5 fields
+  if ((table.fields?.length || 0) > 5 && table.collapsed === undefined) {
+    table.collapsed = true;
+  }
+
+  const visibleCount = table.collapsed
+    ? Math.min(5, table.fields.length)
+    : table.fields?.length || 1;
+  const height = HEADER_HEIGHT + visibleCount * FIELD_HEIGHT + 10;
+
   graph.addNode({
     id: table.id,
     shape: 'html',
@@ -158,6 +267,77 @@ function addTableNode(table) {
       items: makePortsForTable(table),
     },
   });
+
+  // If there are extra fields, attach the show-more handler without interfering with ports
+  if ((table.fields?.length || 0) > 5) {
+    // Defer to next tick to ensure DOM is attached
+    setTimeout(() => {
+      const nodeEl = container.querySelector(`[data-node-id="${table.id}"]`);
+      if (!nodeEl) return;
+      const btn = nodeEl.querySelector('.show-more');
+      const extraFields = nodeEl.querySelectorAll('.er-field.extra-field');
+      const update = (expanded) => {
+        extraFields.forEach((el) => el.classList.toggle('hidden', !expanded));
+        if (btn) {
+          btn.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+          btn.classList.toggle('expanded', expanded);
+          const icon = btn.querySelector('.show-more-icon');
+          if (icon) icon.textContent = expanded ? '\u25B2' : '\u25BC';
+        }
+        const newVisible = expanded ? table.fields.length : 5;
+        const newHeight = HEADER_HEIGHT + newVisible * FIELD_HEIGHT + 10;
+        const cell = graph.getCell(table.id);
+        if (cell && typeof cell.resize === 'function')
+          cell.resize(260, newHeight);
+
+        // Also toggle ports visibility/interactivity for extra fields
+        try {
+          togglePortsVisibility(table.id, table, expanded);
+        } catch (e) {
+          console.log('error', e);
+        }
+
+        // Persist collapsed state back to currentGraphData if present
+        try {
+          const tableInData = (currentGraphData.tables || []).find(
+            (t) => t.id === table.id
+          );
+          if (tableInData) tableInData.collapsed = !expanded; // collapsed === not expanded
+          const nodeCell = graph.getCell(table.id);
+          if (nodeCell)
+            nodeCell.setData &&
+              nodeCell.setData({
+                ...(nodeCell.data || {}),
+                collapsed: !expanded,
+              });
+        } catch (e) {}
+      };
+
+      // Initialize visual state
+      update(!table.collapsed);
+
+      if (btn) {
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation(); // don't trigger node selection or drag
+          table.collapsed = !table.collapsed;
+          update(!table.collapsed);
+        });
+      }
+    }, 0);
+  }
+  //for delete table
+  setTimeout(() => {
+    const nodeEl = container.querySelector(`[data-node-id="${table.id}"]`);
+    if (!nodeEl) return;
+
+    const deleteBtn = nodeEl.querySelector('.btn-delete');
+    if (deleteBtn) {
+      deleteBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        deleteTableById(table.id);
+      });
+    }
+  }, 0);
 }
 
 function updateEdgeLabelAndStyle(edge, relation) {
@@ -261,6 +441,26 @@ function addOrUpdateLinkFromEdge(edge) {
       ...currentGraphData.links[index],
       ...newLink,
     };
+}
+
+// ----------------------------------
+// Add delete table
+// ----------------------------------
+function deleteTableById(tableId) {
+  const node = graph.getCell(tableId);
+  if (!node) return;
+
+  node.remove();
+  currentGraphData.tables = currentGraphData.tables.filter(
+    (t) => t.id !== tableId
+  );
+
+  currentGraphData.links = currentGraphData.links.filter(
+    (l) =>
+      !l.source.startsWith(`${tableId}.`) && !l.target.startsWith(`${tableId}.`)
+  );
+
+  applyGlobalRelationCountSort();
 }
 
 // ----------------------------------
@@ -419,6 +619,63 @@ btnConfirmDelete.addEventListener('click', () => {
   deleteModal.classList.add('hidden');
   edgeToDelete = null;
 });
+///////////////////////////////------------------
+function refreshTablesFromJSON(newJson) {
+  if (!newJson || !Array.isArray(newJson.tables)) return;
+
+  // Existing tables lookup (by id + name)
+  const existingTableKey = new Set(
+    (currentGraphData.tables || []).map((t) => `${t.id}::${t.name}`)
+  );
+
+  let added = false;
+
+  // 1️⃣ Add missing tables
+  newJson.tables.forEach((table) => {
+    const key = `${table.id}::${table.name}`;
+    if (!existingTableKey.has(key)) {
+      // deep clone to avoid mutation
+      const clonedTable = JSON.parse(JSON.stringify(table));
+
+      // default position (center-ish)
+      clonedTable.position = {
+        x: Math.random() * 300 + 100,
+        y: Math.random() * 200 + 100,
+      };
+
+      currentGraphData.tables.push(clonedTable);
+      added = true;
+    }
+  });
+
+  // 2️⃣ Add missing links ONLY if both tables exist
+  if (Array.isArray(newJson.links)) {
+    const existingLinkIds = new Set(
+      (currentGraphData.links || []).map((l) => l.id)
+    );
+
+    newJson.links.forEach((link) => {
+      if (existingLinkIds.has(link.id)) return;
+
+      const [sTable] = link.source.split('.');
+      const [tTable] = link.target.split('.');
+
+      const tableExists = currentGraphData.tables.some(
+        (t) => t.id === sTable || t.id === tTable
+      );
+
+      if (tableExists) {
+        currentGraphData.links.push(JSON.parse(JSON.stringify(link)));
+        added = true;
+      }
+    });
+  }
+
+  // 3️⃣ Rebuild graph ONLY if something changed
+  if (added) {
+    applyGlobalRelationCountSort();
+  }
+}
 
 // ----------------------------------
 // Load Graph
@@ -458,142 +715,147 @@ function loadGraphData(data) {
     addRemoveButton(edge);
   });
 }
+
 // ----------------------------------
-// SQL Generation with joinLevel
+// SQL Generation buildSqlMap()
 // ----------------------------------
-// Build LEFT JOIN clause from a link
-function buildJoinSQL(link, addedTables = new Set()) {
-  if (!link) return '';
-  const sTable = link.sourceTableName;
-  const sField = link.sourceFieldName;
-  const tTable = link.targetTableName;
-  const tField = link.targetFieldName;
-  const rel = link.relation || '=';
+function buildSqlMap() {
+  const { tables, links } = currentGraphData;
+  if (!tables || !tables.length) return [];
 
-  if (!sTable || !tTable) return '';
+  const sqlMap = [];
 
-  // Avoid duplicate joins
-  if (addedTables.has(tTable)) return '';
-  addedTables.add(tTable);
+  const baseTable = tables.find((t) => t.baseTable);
+  if (!baseTable || !baseTable.baseTableKey) return sqlMap;
 
-  return `LEFT JOIN "${tTable}" ON "${sTable}"."${sField}" ${rel} "${tTable}"."${tField}"`;
-}
+  const baseTableName = baseTable.name;
+  const baseTableKey = baseTable.baseTableKey;
 
-// Generate SQL for ONE FIELD using TABLE + FIELD
-function getSQLForField(tableName, fieldName, returnBoth = false) {
-  const tables = currentGraphData.tables || [];
-  const links = currentGraphData.links || [];
+  // Helper function find direct link between two tables
+  const findLink = (a, b) =>
+    links.find(
+      (l) =>
+        (l.sourceTableName === a && l.targetTableName === b) ||
+        (l.targetTableName === a && l.sourceTableName === b)
+    );
 
-  const targetTableObj = tables.find((t) => t.name === tableName);
-  if (!targetTableObj) return returnBoth ? { sql: '', joinLevel: 0 } : '';
-
-  const baseTableObj = tables.find((t) => t.baseTable);
-  if (!baseTableObj) return returnBoth ? { sql: '', joinLevel: 0 } : '';
-
-  const baseTable = baseTableObj.name;
-  const targetTable = targetTableObj.name;
-
-  // BFS shortest path
-  const visited = new Set([baseTable]);
-  const queue = [{ table: baseTable, path: [] }];
-  let finalPath = [];
-
-  while (queue.length) {
-    const { table, path } = queue.shift();
-
-    if (table === targetTable) {
-      finalPath = path;
-      break;
-    }
-
-    links.forEach((l) => {
-      const s = l.sourceTableName;
-      const t = l.targetTableName;
-      if (!s || !t) return;
-
-      let next = null;
-      if (s === table && !visited.has(t)) next = t;
-      else if (t === table && !visited.has(s)) next = s;
-
-      if (next) {
-        visited.add(next);
-        queue.push({ table: next, path: [...path, l] });
-      }
-    });
-  }
-
-  const joinLevel = finalPath.length;
-
-  const addedTables = new Set();
-  const joinClauses = finalPath
-    .map((l) => buildJoinSQL(l, addedTables))
-    .filter(Boolean)
-    .join(' ');
-
-  const sql =
-    `SELECT "${tableName}"."${fieldName}" FROM "${baseTable}" ${joinClauses}`.trim();
-
-  return returnBoth ? { sql, joinLevel } : sql;
-}
-
-// Build map of SQL for all fields with joinLevel
-function buildFieldSQLMap() {
-  const result = {};
-  const tables = currentGraphData.tables || [];
-  const links = currentGraphData.links || [];
-
-  const baseTableObj = tables.find((t) => t.baseTable);
-  if (!baseTableObj) return result;
-
-  const baseTable = baseTableObj.name;
-
-  // BFS reachable tables
-  const reachable = new Set([baseTable]);
-  const queue = [baseTable];
-
-  while (queue.length) {
-    const t = queue.shift();
-
-    links.forEach((l) => {
-      if (!l.sourceTableName || !l.targetTableName) return;
-
-      if (l.sourceTableName === t && !reachable.has(l.targetTableName)) {
-        reachable.add(l.targetTableName);
-        queue.push(l.targetTableName);
-      }
-
-      if (l.targetTableName === t && !reachable.has(l.sourceTableName)) {
-        reachable.add(l.sourceTableName);
-        queue.push(l.sourceTableName);
-      }
-    });
-  }
-
-  // Build SQL map only for reachable tables
   tables.forEach((table) => {
-    if (!reachable.has(table.name)) return;
+    const tableEntry = {
+      tableId: table.id,
+      tableName: table.name,
+      fields: [],
+    };
 
-    result[table.name] = [];
+    table.fields.forEach((field) => {
+      let sql = '';
+      let joinLevel = 0;
 
-    (table.fields || []).forEach((field) => {
-      const { sql, joinLevel } = getSQLForField(table.name, field.name, true);
+      // ---------------------------
+      // BASE TABLE (LEVEL 0)
+      // ---------------------------
+      if (table.baseTable) {
+        joinLevel = 0;
 
-      result[table.name].push({
-        fieldName: field.name,
+        sql =
+          `SELECT \\\"${field.name}\\\" FROM \\\"${table.name}\\\" ` +
+          `WHERE \\\"${baseTableKey}\\\" = '"&${table.name}::${baseTableKey}&"'`;
+      }
+
+      // ---------------------------
+      // LEVEL 1 (Direct to base)
+      // ---------------------------
+      else {
+        const level1Link = findLink(baseTableName, table.name);
+
+        if (level1Link) {
+          joinLevel = 1;
+
+          const fk =
+            level1Link.sourceTableName === baseTableName
+              ? level1Link.targetFieldName
+              : level1Link.sourceFieldName;
+
+          const pk =
+            level1Link.sourceTableName === baseTableName
+              ? level1Link.sourceFieldName
+              : level1Link.targetFieldName;
+
+          sql =
+            `SELECT \\\"${field.name}\\\" FROM \\\"${table.name}\\\" ` +
+            `WHERE \\\"${fk}\\\" = '"&${baseTableName}::${pk}&"'`;
+        }
+
+        // ---------------------------
+        // LEVEL 2 (via level-1 table)
+        // ---------------------------
+        else {
+          const level1Table = tables.find(
+            (t) =>
+              findLink(baseTableName, t.name) && findLink(t.name, table.name)
+          );
+
+          if (!level1Table) return;
+
+          const linkBaseToL1 = findLink(baseTableName, level1Table.name);
+          const linkL1ToL2 = findLink(level1Table.name, table.name);
+
+          joinLevel = 2;
+
+          const baseFK =
+            linkBaseToL1.sourceTableName === baseTableName
+              ? linkBaseToL1.sourceFieldName
+              : linkBaseToL1.targetFieldName;
+
+          const level1PK =
+            linkBaseToL1.sourceTableName === baseTableName
+              ? linkBaseToL1.targetFieldName
+              : linkBaseToL1.sourceFieldName;
+
+          const level1FK =
+            linkL1ToL2.sourceTableName === level1Table.name
+              ? linkL1ToL2.sourceFieldName
+              : linkL1ToL2.targetFieldName;
+
+          const level2PK =
+            linkL1ToL2.sourceTableName === level1Table.name
+              ? linkL1ToL2.targetFieldName
+              : linkL1ToL2.sourceFieldName;
+
+          sql =
+            `SELECT \\\"${field.name}\\\" FROM \\\"${table.name}\\\" ` +
+            `WHERE \\\"${level2PK}\\\" = (` +
+            `SELECT \\\"${level1FK}\\\" FROM \\\"${level1Table.name}\\\" ` +
+            `WHERE \\\"${level1PK}\\\" = '"&${baseTableName}::${baseFK}&"'` +
+            `)`;
+        }
+      }
+
+      if (!sql) return;
+
+      tableEntry.fields.push({
         fieldId: field.id,
+        fieldName: field.name,
         sql,
         joinLevel,
       });
     });
+
+    if (tableEntry.fields.length) {
+      sqlMap.push(tableEntry);
+    }
   });
 
-  return result;
+  return sqlMap;
 }
 
-//--------------------------------------------------------------------------------------------------------
 // ----------------------------------
 // Center Graph
 // ----------------------------------
+function zoomInGraph() {
+  graph.centerContent();
+  const currentZoom = graph.zoom();
+  graph.zoomTo(currentZoom * 0.85);
+}
 document
   .getElementById('btnCenter')
   .addEventListener('click', () => graph.centerContent());
@@ -603,7 +865,7 @@ document
 // ----------------------------------
 document.getElementById('btnExport').addEventListener('click', () => {
   const exportData = JSON.parse(JSON.stringify(currentGraphData));
-  const sqlMap = buildFieldSQLMap();
+  const sqlMap = buildSqlMap();
   graph.getNodes().forEach((node) => {
     const pos = node.position();
     const table = exportData.tables.find((t) => t.id === node.id);
@@ -617,28 +879,39 @@ document.getElementById('btnExport').addEventListener('click', () => {
   a.click();
 });
 
-// Function to test the viewport methods on the graph.paper object
-
 // ----------------------------------
-// Demo / FileMaker
+// demo api json call for graph
 // ----------------------------------
 document.getElementById('btnLoadDemo').addEventListener('click', () => {
-  fetch('http://localhost:8000/demoJSON/demo.json')
+  fetch('http://localhost:8000/demoJSON/erdJSON.json')
     .then((res) => res.json())
     .then((jsonData) => {
       currentGraphData = JSON.parse(JSON.stringify(jsonData));
       applyGlobalRelationCountSort();
-      graph.centerContent();
+      zoomInGraph();
     })
     .catch((err) => console.error('Failed to load demo JSON:', err));
 });
 
+// ---------------------------------------------------------------
+// FileMaker window function calls for intraction with web viewer
+// ---------------------------------------------------------------
 window.receiveJSONFromFM = (jsonString) => {
   try {
     const parsed = JSON.parse(jsonString);
     currentGraphData = JSON.parse(JSON.stringify(parsed));
     applyGlobalRelationCountSort();
-    graph.centerContent();
+    zoomInGraph();
+  } catch (e) {
+    alert('Invalid JSON from FileMaker');
+    console.error(e);
+  }
+};
+
+window.refreshTable = (jsonString) => {
+  try {
+    const parsed = JSON.parse(jsonString);
+    refreshTablesFromJSON(parsed);
   } catch (e) {
     alert('Invalid JSON from FileMaker');
     console.error(e);
@@ -652,9 +925,19 @@ window.updateBaseTable = (newBaseTableName) => {
   applyGlobalRelationCountSort();
 };
 
+window.updateBaseTableKey = (newBaseTableKeyName) => {
+  console.log(currentGraphData);
+  currentGraphData.tables.forEach((t) => {
+    if (t.baseTable === true) {
+      t.baseTableKey = newBaseTableKeyName;
+    }
+  });
+  applyGlobalRelationCountSort();
+};
+
 window.sendJSON = async () => {
   const exportData = JSON.parse(JSON.stringify(currentGraphData));
-  const sqlMap = buildFieldSQLMap();
+  const sqlMap = buildSqlMap();
   graph.getNodes().forEach((node) => {
     const pos = node.position();
     const table = exportData.tables.find((t) => t.id === node.id);

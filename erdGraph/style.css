@@ -83,12 +83,15 @@ body {
   box-shadow: 0 6px 18px rgba(255, 193, 7, 0.3);
 }
 
-.base-table .er-header {
+.base-table > .er-header {
   background: linear-gradient(90deg, #ffc107, #ff9800);
   color: #000000;
 }
+.er-fields-container > .base-tableKey {
+  color: #000000;
+  font-weight: bold;
+}
 
-/* Modal Styles */
 .modal {
   position: fixed;
   left: 0;
@@ -130,19 +133,100 @@ body {
 .er-header {
   background: #0e7490;
   color: #fff;
-  padding: 10px;
-  font-weight: bold;
+  height: 42px;
+  padding: 0 10px;
+  font-weight: 600;
   border-radius: 8px 8px 0 0;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  box-sizing: border-box;
+}
+.er-title {
+  font-size: 18px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.er-header .er-title {
+  line-height: 42px;
+}
+.er-header > span:last-child {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.er-header .show-more {
+  background: transparent;
+  border: none;
+  color: #fff;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  border-radius: 4px;
+}
+
+.er-header .show-more svg {
+  pointer-events: none;
+  transition: transform 0.2s ease;
+}
+
+.er-header .show-more.expanded svg {
+  transform: rotate(180deg);
+}
+
+.er-header .show-more .show-more-icon {
+  font-size: 14px;
+  color: #fff;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.er-field.extra-field.hidden {
+  display: none;
 }
 
 .er-fields-container {
-  padding: 8px;
+  padding: 0;
+  box-sizing: border-box;
 }
+
+.btn-delete {
+  background: transparent;
+  border: none;
+  color: #e24c4c;
+  cursor: pointer;
+  font-size: 16px; /* reduced size */
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border-radius: 4px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  color: rgb(207, 4, 4);
+}
+
 tspan {
   font-size: 22px;
   line-height: 30px;
 }
 .er-field {
-  padding: 1px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  padding: 0 8px;
   border-bottom: 1px solid #eee;
+  box-sizing: border-box;
 }

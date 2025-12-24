@@ -14,7 +14,8 @@ app.use((req, res, next) => {
 app.use(express.static(path.join(__dirname)));
 
 app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'index.html'));
+  //res.sendFile(path.join(__dirname, 'erdGraph', 'index.html'));
+  res.sendFile(path.join(__dirname, 'layout', 'index.html'));
 });
 
 app.listen(PORT, () => {
