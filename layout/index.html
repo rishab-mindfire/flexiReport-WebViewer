@@ -2,10 +2,91 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Document</title>
+    <title>JS FileMaker-Style Report Builder</title>
+    <!-- Intract js -->
+    <script src="https://cdn.jsdelivr.net/npm/interactjs/dist/interact.min.js"></script>
+    <!-- App CSS -->
+    <link rel="stylesheet" href="../layout/style.css" />
   </head>
   <body>
-    <h3>layout</h3>
+    <div id="toolbar">
+      <strong>Report Builder</strong>
+      <button class="secondary" onclick="app.loadDataFromAPI()">
+        Load data
+      </button>
+
+      <button onclick="app.generatePreview()">▶ Preview</button>
+      <button class="secondary" onclick="app.saveSchema()">Save JSON</button>
+      <button class="secondary" onclick="app.loadFromPrompt()">
+        📂 Load JSON
+      </button>
+    </div>
+    <div id="workspace">
+      <div id="toolbox">
+        <strong>Keep Parts</strong>
+        <label><input id="keep-header" type="checkbox" checked /> Header</label>
+        <label><input id="keep-body" type="checkbox" checked /> Body</label>
+        <label><input id="keep-footer" type="checkbox" checked /> Footer</label>
+        <h3>Fields</h3>
+        <div id="fields-list"></div>
+        <h3>Static</h3>
+        <div class="tool-item tool-label" draggable="true" data-type="label">
+          Text Label
+        </div>
+        <h3>Calculations</h3>
+        <div
+          class="tool-item tool-calc"
+          draggable="true"
+          data-type="calculation"
+          data-function="SUM">
+          SUM
+        </div>
+        <div
+          class="tool-item tool-calc"
+          draggable="true"
+          data-type="calculation"
+          data-function="AVG">
+          AVG
+        </div>
+      </div>
+      <div id="canvas-wrapper">
+        <div class="design-page">
+          <div
+            id="part-header"
+            class="part"
+            data-part="header"
+            data-label="Header">
+            <div class="resize-handle"></div>
+          </div>
+          <div id="part-body" class="part" data-part="body" data-label="Body">
+            <div class="resize-handle"></div>
+          </div>
+          <div
+            id="part-footer"
+            class="part"
+            data-part="footer"
+            data-label="Footer">
+            <div class="resize-handle"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Preview Modal -->
+    <div id="preview-modal">
+      <div id="preview-content-wrapper">
+        <div id="preview-toolbar">
+          <button
+            class="secondary"
+            onclick="document.getElementById('preview-modal').style.display='none'">
+            Close
+          </button>
+        </div>
+        <div id="preview-content"></div>
+      </div>
+    </div>
+
+    <!-- APP JS -->
+    <script src="../layout/index.js"></script>
   </body>
 </html>
