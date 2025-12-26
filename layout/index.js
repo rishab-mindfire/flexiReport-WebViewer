@@ -449,6 +449,63 @@ const Actions = {
     a.download = 'report_schema.json';
     a.click();
   },
+
+  //get HTML
+  showFullPreviewHTML() {
+    // Get the preview container
+    const preview = document.getElementById('preview-content');
+    if (!preview || !preview.innerHTML.trim()) {
+      alert('Please open Preview first.');
+      return;
+    }
+
+    // Clone the preview DOM (deep copy)
+    const clone = preview.cloneNode(true);
+
+    // Collect only the CSS we wrote for report (optional)
+    // Or skip this if all styles are inline
+    let cssText = `
+.r-part-header, .r-part-body, .r-part-footer { position: relative; }
+.r-element { position: absolute; }
+`;
+
+    // Build final HTML: only the preview content + optional styles
+    const fullHTML = `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Report Preview</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+${cssText}
+</style>
+</head>
+<body>
+${clone.innerHTML}
+</body>
+</html>`;
+
+    // Show in modal (if exists) or new window
+    const ta = document.getElementById('html-content');
+    const modal = document.getElementById('html-modal');
+
+    if (ta && modal) {
+      ta.value = fullHTML;
+      modal.style.display = 'flex';
+    } else {
+      const w = window.open('', '_blank');
+      w.document.write(fullHTML);
+      w.document.close();
+    }
+  },
+
+  // Copy preview HTML from modal
+  copyPreviewHTML() {
+    const ta = document.getElementById('html-content');
+    ta.select();
+    document.execCommand('copy');
+    alert('HTML copied');
+  },
 };
 
 Actions.init();
