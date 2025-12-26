@@ -14,11 +14,13 @@
       <button class="secondary" onclick="app.loadDataFromAPI()">
         Load data
       </button>
-
       <button onclick="app.generatePreview()">▶ Preview</button>
       <button class="secondary" onclick="app.saveSchema()">Save JSON</button>
       <button class="secondary" onclick="app.loadFromPrompt()">
         📂 Load JSON
+      </button>
+      <button class="secondary" onclick="app.showFullPreviewHTML()">
+        Get Full Preview HTML
       </button>
     </div>
     <div id="workspace">
@@ -83,6 +85,51 @@
           </button>
         </div>
         <div id="preview-content"></div>
+      </div>
+    </div>
+
+    <!-- HTML EXPORT MODAL -->
+    <div
+      id="html-modal"
+      style="
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.6);
+        z-index: 9999;
+        align-items: center;
+        justify-content: center;
+      ">
+      <div
+        style="
+          background: #fff;
+          width: 80%;
+          max-width: 900px;
+          padding: 12px;
+          border-radius: 6px;
+          display: flex;
+          flex-direction: column;
+        ">
+        <h3 style="margin: 0 0 8px">Full Preview HTML</h3>
+
+        <textarea
+          id="html-content"
+          spellcheck="false"
+          style="
+            width: 100%;
+            height: 320px;
+            font-family: monospace;
+            font-size: 12px;
+          "></textarea>
+
+        <div style="margin-top: 8px; text-align: right">
+          <button onclick="app.copyPreviewHTML()">Copy</button>
+          <button
+            class="secondary"
+            onclick="document.getElementById('html-modal').style.display='none'">
+            Close
+          </button>
+        </div>
       </div>
     </div>
 
