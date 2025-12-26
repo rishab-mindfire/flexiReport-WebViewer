@@ -166,7 +166,7 @@ const Actions = {
       } catch (err) {
         list.innerHTML = '<div style="color:red">Header Load Failed</div>';
       }
-    }, 1200); // Simulated delay
+    }, 1800); // Simulated delay
   },
 
   refreshToolbox() {
@@ -452,53 +452,77 @@ const Actions = {
 
   //get HTML
   showFullPreviewHTML() {
-    // Get the preview container
-    const preview = document.getElementById('preview-content');
-    if (!preview || !preview.innerHTML.trim()) {
-      alert('Please open Preview first.');
-      return;
-    }
+    // Get schema from ReportEngine
+    const s = ReportEngine.getSchema();
 
-    // Clone the preview DOM (deep copy)
-    const clone = preview.cloneNode(true);
+    const escapeHtml = (str) =>
+      String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
 
-    // Collect only the CSS we wrote for report (optional)
-    // Or skip this if all styles are inline
-    let cssText = `
-.r-part-header, .r-part-body, .r-part-footer { position: relative; }
-.r-element { position: absolute; }
-`;
+    const renderElementHtml = (def, row) => {
+      let text = '';
+      if (def.type === 'field' && row) text = row[def.key] ?? '';
+      else if (def.type === 'calculation' && def.field) {
+        const vals = Store.data.map((r) => parseFloat(r[def.field] || 0));
+        let res = 0;
+        if (def.function === 'SUM') res = vals.reduce((a, b) => a + b, 0);
+        else if (def.function === 'AVG')
+          res = vals.reduce((a, b) => a + b, 0) / vals.length;
+        text = String(res);
+      } else text = def.content || '';
 
-    // Build final HTML: only the preview content + optional styles
-    const fullHTML = `<!DOCTYPE html>
+      return `<div class="r-element" style="left:${def.x}px;top:${
+        def.y
+      }px;width:${def.w}px;height:${def.h}px">${escapeHtml(text)}</div>`;
+    };
+
+    let bodyHtml = '<div class="page">';
+    ['header', 'body', 'footer'].forEach((partName) => {
+      if (!s.parts[partName]) return;
+      if (partName === 'body') {
+        Store.data.forEach((row) => {
+          bodyHtml += `<div class="r-part-body" style="height:${s.parts.body.height}px">`;
+          s.parts.body.elements.forEach(
+            (e) => (bodyHtml += renderElementHtml(e, row))
+          );
+          bodyHtml += '</div>';
+        });
+      } else {
+        bodyHtml += `<div class="r-part-${partName}" style="height:${s.parts[partName].height}px">`;
+        s.parts[partName].elements.forEach(
+          (e) => (bodyHtml += renderElementHtml(e))
+        );
+        bodyHtml += '</div>';
+      }
+    });
+    bodyHtml += '</div>';
+
+    const styleText = `
+    .r-part-header, .r-part-body, .r-part-footer { position: relative; }
+    .r-part-body { border-bottom: 1px solid #ccc; } 
+    .r-element { position: absolute; }
+  `;
+
+    const full = `<!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Report Preview</title>
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<style>
-${cssText}
-</style>
+<style>${styleText}</style>
 </head>
-<body>
-${clone.innerHTML}
-</body>
+<body>${bodyHtml}</body>
 </html>`;
 
-    // Show in modal (if exists) or new window
-    const ta = document.getElementById('html-content');
     const modal = document.getElementById('html-modal');
-
-    if (ta && modal) {
-      ta.value = fullHTML;
-      modal.style.display = 'flex';
-    } else {
-      const w = window.open('', '_blank');
-      w.document.write(fullHTML);
-      w.document.close();
-    }
+    const ta = document.getElementById('html-content');
+    if (ta) ta.value = full;
+    if (modal) modal.style.display = 'flex';
   },
-
   // Copy preview HTML from modal
   copyPreviewHTML() {
     const ta = document.getElementById('html-content');
