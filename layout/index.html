@@ -12,9 +12,6 @@
   <body>
     <div id="toolbar">
       <strong>Report Builder</strong>
-      <button class="secondary" onclick="app.loadDataFromAPI()">
-        Load data
-      </button>
       <button onclick="app.generatePreview()">▶ Preview</button>
       <button class="secondary" onclick="app.saveSchema()">Save JSON</button>
       <button class="secondary" onclick="app.loadFromPrompt()">
@@ -26,9 +23,20 @@
     </div>
 
     <!-- Formatting bar -->
-    <div id="format-bar" style="display:flex; align-items:center; gap:8px; padding:8px 12px; background:#f1f1f1; border-bottom:1px solid #ddd;">
-      <label style="margin-right:6px; font-size:13px; color:#333;">Format:</label>
-      <select id="format-fontsize" title="Font size" style="padding:6px;">
+    <div
+      id="format-bar"
+      style="
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 12px;
+        background: #f1f1f1;
+        border-bottom: 1px solid #ddd;
+      ">
+      <label style="margin-right: 6px; font-size: 13px; color: #333"
+        >Format:</label
+      >
+      <select id="format-fontsize" title="Font size" style="padding: 6px">
         <option value="10">10px</option>
         <option value="12">12px</option>
         <option value="14" selected>14px</option>
@@ -40,12 +48,19 @@
         <option value="32">32px</option>
       </select>
 
-      <button id="format-bold" title="Bold" style="padding:6px 10px">B</button>
-      <button id="format-italic" title="Italic" style="padding:6px 10px">I</button>
-      <button id="format-underline" title="Underline" style="padding:6px 10px">U</button>
+      <button id="format-bold" title="Bold" style="padding: 6px 10px">B</button>
+      <button id="format-italic" title="Italic" style="padding: 6px 10px">
+        I
+      </button>
+      <button id="format-underline" title="Underline" style="padding: 6px 10px">
+        U
+      </button>
 
-      <div style="flex:1"></div>
-      <small style="color:#666">Select an element then change formatting — preview will reflect styles.</small>
+      <div style="flex: 1"></div>
+      <small style="color: #666"
+        >Select an element then change formatting — preview will reflect
+        styles.</small
+      >
     </div>
     <div id="workspace">
       <div id="toolbox">
@@ -159,6 +174,5 @@
 
     <!-- APP JS -->
     <script src="../layout/index.js"></script>
-    
   </body>
 </html>
