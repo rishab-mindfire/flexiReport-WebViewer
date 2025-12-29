@@ -1,0 +1,47 @@
+{
+  "tables": [
+    {
+      "id": "4E81159D-836D-634C-855E-C12F42137D00",
+      "name": "Vendor",
+      "baseTable": true,
+      "position": { "x": 200, "y": 150 },
+      "fields": [
+        { "id": "vendorid_t", "name": "VendorID_t" },
+        { "id": "vendorname_t", "name": "VendorName_t" },
+        { "id": "vendoremail_t", "name": "VendorEmail_t" },
+        { "id": "vendorcompanyaddresh_t", "name": "VendorCompanyAddresh_t" }
+      ]
+    },
+    {
+      "id": "E4ADAF6E-3A8B-9E4A-BA6A-19CA67C4E0A2",
+      "name": "Order",
+      "baseTable": false,
+      "position": { "x": 200, "y": 150 },
+      "fields": [
+        { "id": "orderid_t", "name": "OrderID_t" },
+        { "id": "customername_t", "name": "CustomerName_t" },
+        { "id": "totalamount_n", "name": "TotalAmount_n" },
+        { "id": "customerid_t", "name": "CustomerID_t" },
+        { "id": "paidamount_n", "name": "PaidAmount_n" },
+        { "id": "dueamount_n", "name": "DueAmount_n" },
+        { "id": "vendorid_t", "name": "VendorID_t" }
+      ]
+    },
+    {
+      "id": "25DB383E-714F-3747-9859-50A1ACAA0D64",
+      "name": "Customer",
+      "baseTable": false,
+      "position": { "x": 200, "y": 150 },
+      "fields": [
+        { "id": "customer_id", "name": "Customer_ID" },
+        { "id": "customername_t", "name": "CustomerName_t" },
+        { "id": "customeremail_t", "name": "CustomerEmail_t" },
+        { "id": "customerrating_n", "name": "CustomerRating_n" },
+        { "id": "customernote_t", "name": "CustomerNote_t" },
+        { "id": "customeradd", "name": "CustomerAdd" },
+        { "id": "customermobile_t", "name": "CustomerMobile_t" }
+      ]
+    }
+  ],
+  "links": []
+}

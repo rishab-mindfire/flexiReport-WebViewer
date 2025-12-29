@@ -1,0 +1,238 @@
+:root {
+  --bg-color: #f4f4f4;
+  --panel-bg: #ffffff;
+  --border: #ccc;
+  --primary: #007bff;
+  --header-h: 100px;
+  --body-h: 60px;
+  --footer-h: 60px;
+}
+body {
+  margin: 0;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  font-family: sans-serif;
+  background: var(--bg-color);
+}
+#toolbar {
+  height: 50px;
+  background: #333;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 0 15px;
+}
+
+/* Formatting toolbar */
+#format-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: #f1f1f1;
+  border-bottom: 1px solid #ddd;
+}
+#format-bar button {
+  background: #fff;
+  border: 1px solid #ccc;
+  color: #333;
+  border-radius: 4px;
+}
+#format-bar button.active {
+  background: var(--primary);
+  color: #fff;
+  border-color: rgba(0,0,0,0.08);
+}
+#format-fontsize { border-radius:4px; }
+
+button {
+  padding: 8px 14px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  background: var(--primary);
+  color: #fff;
+}
+button.secondary {
+  background: #666;
+}
+#workspace {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+}
+#toolbox {
+  width: 250px;
+  padding: 10px;
+  background: var(--panel-bg);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+}
+#toolbox > h3 {
+  margin-top: 5px;
+  margin-bottom: 0;
+}
+.tool-item {
+  padding: 10px;
+  background: #eef;
+  border: 1px solid #ccd;
+  margin: 5px 0;
+  cursor: grab;
+  user-select: none;
+}
+.tool-label {
+  background: #fee;
+  border-color: #dcc;
+}
+.tool-calc {
+  background: #dfd;
+  border-color: #9c9;
+}
+#fields-list {
+  flex: 1;
+  overflow-y: auto;
+  border: 1px solid var(--border);
+  background: #fafafa;
+  padding: 5px;
+}
+
+#canvas-wrapper {
+  flex: 1;
+  padding: 20px;
+  overflow: auto;
+  display: flex;
+  justify-content: center;
+}
+.design-page {
+  width: 794px;
+  background: #fff;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.15);
+  display: flex;
+  flex-direction: column;
+}
+.part {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+  border-bottom: 1px dashed #bbb;
+}
+.part::after {
+  content: attr(data-label);
+  position: absolute;
+  top: 2px;
+  right: 5px;
+  font-size: 10px;
+  color: #aaa;
+  pointer-events: none;
+}
+#part-header {
+  height: var(--header-h);
+  background: #f9f9f9;
+}
+#part-body {
+  height: var(--body-h);
+}
+#part-footer {
+  height: var(--footer-h);
+  background: #f9f9f9;
+}
+.resize-handle {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 8px;
+  bottom: -4px;
+  cursor: ns-resize;
+}
+.canvas-element {
+  position: absolute;
+  top: 0;
+  left: 0;
+  padding: 4px 8px 4px 32px;
+  background: rgba(0, 123, 255, 0.2);
+  border: 1px solid var(--primary);
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+}
+.canvas-element.is-label {
+  background: rgba(255, 193, 7, 0.2);
+  border-color: orange;
+}
+.canvas-element:hover .drag-handle {
+  opacity: 1;
+}
+.drag-handle {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: grab;
+  background: rgba(0, 0, 0, 0.05);
+  border-right: 1px solid rgba(0, 0, 0, 0.1);
+  z-index: 10;
+}
+/* Preview modal */
+#preview-modal .drag-handle {
+  display: none !important;
+}
+#preview-modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: none;
+  justify-content: center;
+  align-items: center;
+  z-index: 999;
+}
+#preview-content-wrapper {
+  background: #fff;
+  padding: 20px;
+  max-height: 90%;
+  overflow: auto;
+  box-shadow: 0 0 15px rgba(0, 0, 0, 0.3);
+  border-radius: 6px;
+  position: relative;
+}
+#preview-toolbar {
+  position: sticky;
+  top: 0;
+  background: #fff;
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 10px;
+  padding-bottom: 5px;
+  border-bottom: 1px solid #ccc;
+  z-index: 5;
+}
+.r-part-header,
+.r-part-body,
+.r-part-footer {
+  position: relative;
+  width: 794px;
+}
+.r-part-body {
+  border-bottom: 1px solid #eee;
+}
+.r-element {
+  position: absolute;
+  font-size: 14px;
+  white-space: nowrap;
+}
+/* edit field */
+.element-content:focus {
+  outline: none;
+}
+#fields-list .loading-text {
+  padding: 10px;
+  color: #666;
+  font-style: italic;
+  text-align: center;
+}
