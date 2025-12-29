@@ -24,6 +24,29 @@ body {
   gap: 20px;
   padding: 0 15px;
 }
+
+/* Formatting toolbar */
+#format-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: #f1f1f1;
+  border-bottom: 1px solid #ddd;
+}
+#format-bar button {
+  background: #fff;
+  border: 1px solid #ccc;
+  color: #333;
+  border-radius: 4px;
+}
+#format-bar button.active {
+  background: var(--primary);
+  color: #fff;
+  border-color: rgba(0,0,0,0.08);
+}
+#format-fontsize { border-radius:4px; }
+
 button {
   padding: 8px 14px;
   border: none;

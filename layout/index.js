@@ -47,6 +47,17 @@ const ReportEngine = {
             cleanContent = `[${e.dataset.key}]`;
           }
 
+          const contentEl = e.querySelector('.element-content');
+          // Prefer inline style, fallback to dataset values
+          const fontSize = contentEl?.style.fontSize
+            ? parseInt(contentEl.style.fontSize)
+            : e.dataset.fontSize
+            ? parseInt(e.dataset.fontSize)
+            : null;
+          const bold = (contentEl?.style.fontWeight || '') === 'bold' || e.dataset.bold === '1';
+          const italic = (contentEl?.style.fontStyle || '') === 'italic' || e.dataset.italic === '1';
+          const underline = (contentEl?.style.textDecoration || '') === 'underline' || e.dataset.underline === '1';
+
           return {
             type: type,
             key: e.dataset.key || null,
@@ -57,6 +68,10 @@ const ReportEngine = {
             h: Math.round(parseFloat(e.style.height)) || 22,
             function: e.dataset.function || null,
             field: e.dataset.field || null,
+            fontSize: fontSize,
+            bold: !!bold,
+            italic: !!italic,
+            underline: !!underline,
           };
         }),
       };
@@ -70,7 +85,7 @@ const ReportEngine = {
  */
 const Renderer = {
   createCanvasElement(parent, config) {
-    const { x, y, type, key, content, w = 150, h = 22, field } = config;
+    const { x, y, type, key, content, w = 150, h = 22, field, fontSize, bold, italic, underline } = config;
     const funcName = config.function || config.func;
 
     const el = document.createElement('div');
@@ -85,6 +100,10 @@ const Renderer = {
     if (key) el.dataset.key = key;
     if (funcName) el.dataset.function = funcName;
     if (field) el.dataset.field = field;
+    if (fontSize) el.dataset.fontSize = String(fontSize);
+    if (bold) el.dataset.bold = '1';
+    if (italic) el.dataset.italic = '1';
+    if (underline) el.dataset.underline = '1';
 
     const contentDiv = document.createElement('div');
     contentDiv.className = 'element-content';
@@ -98,6 +117,16 @@ const Renderer = {
     } else {
       contentDiv.textContent = `[${key}]`;
     }
+
+    // Apply formatting if provided
+    const applyFormattingToContent = (el, cd) => {
+      const fs = fontSize || el.dataset.fontSize || null;
+      if (fs) cd.style.fontSize = (fs ? String(fs) : 14) + 'px';
+      if (bold || el.dataset.bold === '1') cd.style.fontWeight = 'bold';
+      if (italic || el.dataset.italic === '1') cd.style.fontStyle = 'italic';
+      if (underline || el.dataset.underline === '1') cd.style.textDecoration = 'underline';
+    };
+    applyFormattingToContent(el, contentDiv);
 
     const handle = document.createElement('div');
     handle.className = 'drag-handle';
@@ -148,6 +177,7 @@ const Actions = {
     this.setupKeyboardListeners();
     this.setupSidebarToggles();
     this.setupDropZones();
+    this.setupFormattingBar();
     this.loadHeaders(); // Step 1: Initial Load
   },
 
@@ -231,7 +261,11 @@ const Actions = {
             width: e.w + 'px',
             height: e.h + 'px',
           });
-
+          // Apply formatting from schema
+          if (e.fontSize) el.style.fontSize = e.fontSize + 'px';
+          el.style.fontWeight = e.bold ? 'bold' : 'normal';
+          el.style.fontStyle = e.italic ? 'italic' : 'normal';
+          el.style.textDecoration = e.underline ? 'underline' : 'none';
           if (e.type === 'field' && row) el.textContent = row[e.key];
           else if (e.type === 'calculation')
             el.textContent = ReportEngine.calculate(e.function, e.field);
@@ -281,6 +315,106 @@ const Actions = {
     if (Store.selectedElement) Store.selectedElement.style.outline = '';
     Store.selectedElement = el;
     el.style.outline = '2px dashed red';
+
+    // Sync formatting toolbar to the selected element
+    const contentEl = el.querySelector('.element-content');
+    const fs = contentEl?.style.fontSize ? parseInt(contentEl.style.fontSize) : el.dataset.fontSize ? parseInt(el.dataset.fontSize) : 14;
+    const bold = (contentEl?.style.fontWeight || '') === 'bold' || el.dataset.bold === '1';
+    const italic = (contentEl?.style.fontStyle || '') === 'italic' || el.dataset.italic === '1';
+    const underline = (contentEl?.style.textDecoration || '') === 'underline' || el.dataset.underline === '1';
+
+    const fsSelect = document.getElementById('format-fontsize');
+    const bBtn = document.getElementById('format-bold');
+    const iBtn = document.getElementById('format-italic');
+    const uBtn = document.getElementById('format-underline');
+    if (fsSelect) fsSelect.value = String(fs);
+    if (bBtn) bBtn.classList.toggle('active', !!bold);
+    if (iBtn) iBtn.classList.toggle('active', !!italic);
+    if (uBtn) uBtn.classList.toggle('active', !!underline);
+  },
+
+  applyFormatting(el, { fontSize, bold, italic, underline }) {
+    if (!el) return;
+    const contentEl = el.querySelector('.element-content');
+    if (!contentEl) return;
+
+    if (typeof fontSize !== 'undefined') {
+      contentEl.style.fontSize = fontSize ? fontSize + 'px' : '';
+      el.dataset.fontSize = fontSize ? String(fontSize) : '';
+    }
+    if (typeof bold !== 'undefined') {
+      if (bold) {
+        contentEl.style.fontWeight = 'bold';
+        el.dataset.bold = '1';
+      } else {
+        contentEl.style.fontWeight = '';
+        el.dataset.bold = '';
+      }
+    }
+    if (typeof italic !== 'undefined') {
+      if (italic) {
+        contentEl.style.fontStyle = 'italic';
+        el.dataset.italic = '1';
+      } else {
+        contentEl.style.fontStyle = '';
+        el.dataset.italic = '';
+      }
+    }
+    if (typeof underline !== 'undefined') {
+      if (underline) {
+        contentEl.style.textDecoration = 'underline';
+        el.dataset.underline = '1';
+      } else {
+        contentEl.style.textDecoration = '';
+        el.dataset.underline = '';
+      }
+    }
+  },
+
+  setupFormattingBar() {
+    const fsSelect = document.getElementById('format-fontsize');
+    const bBtn = document.getElementById('format-bold');
+    const iBtn = document.getElementById('format-italic');
+    const uBtn = document.getElementById('format-underline');
+
+    if (fsSelect) {
+      fsSelect.onchange = (e) => {
+        if (!Store.selectedElement) return alert('Select an element first');
+        const size = parseInt(e.target.value);
+        this.applyFormatting(Store.selectedElement, { fontSize: size });
+      };
+    }
+    if (bBtn) {
+      bBtn.onclick = (e) => {
+        if (!Store.selectedElement) return alert('Select an element first');
+        const active = bBtn.classList.toggle('active');
+        this.applyFormatting(Store.selectedElement, { bold: active });
+      };
+    }
+    if (iBtn) {
+      iBtn.onclick = (e) => {
+        if (!Store.selectedElement) return alert('Select an element first');
+        const active = iBtn.classList.toggle('active');
+        this.applyFormatting(Store.selectedElement, { italic: active });
+      };
+    }
+    if (uBtn) {
+      uBtn.onclick = (e) => {
+        if (!Store.selectedElement) return alert('Select an element first');
+        const active = uBtn.classList.toggle('active');
+        this.applyFormatting(Store.selectedElement, { underline: active });
+      };
+    }
+
+    // Deselect formatting when clicking canvas
+    document.addEventListener('click', (ev) => {
+      if (!ev.target.closest('.canvas-element')) {
+        ['format-bold', 'format-italic', 'format-underline'].forEach((id) => {
+          const btn = document.getElementById(id);
+          if (btn) btn.classList.remove('active');
+        });
+      }
+    });
   },
 
   setupPartResizing() {
@@ -475,9 +609,14 @@ const Actions = {
         text = String(res);
       } else text = def.content || '';
 
-      return `<div class="r-element" style="left:${def.x}px;top:${
-        def.y
-      }px;width:${def.w}px;height:${def.h}px">${escapeHtml(text)}</div>`;
+      // Build inline style for font formatting
+      let extraStyle = `left:${def.x}px;top:${def.y}px;width:${def.w}px;height:${def.h}px`;
+      if (def.fontSize) extraStyle += `;font-size:${def.fontSize}px`;
+      if (def.bold) extraStyle += `;font-weight:bold`;
+      if (def.italic) extraStyle += `;font-style:italic`;
+      if (def.underline) extraStyle += `;text-decoration:underline`;
+
+      return `<div class="r-element" style="${extraStyle}">${escapeHtml(text)}</div>`;
     };
 
     let bodyHtml = '<div class="page">';

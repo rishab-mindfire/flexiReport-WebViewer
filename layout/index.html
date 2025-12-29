@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+<!-- Added toolbar -->
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -22,6 +23,29 @@
       <button class="secondary" onclick="app.showFullPreviewHTML()">
         Get Full Preview HTML
       </button>
+    </div>
+
+    <!-- Formatting bar -->
+    <div id="format-bar" style="display:flex; align-items:center; gap:8px; padding:8px 12px; background:#f1f1f1; border-bottom:1px solid #ddd;">
+      <label style="margin-right:6px; font-size:13px; color:#333;">Format:</label>
+      <select id="format-fontsize" title="Font size" style="padding:6px;">
+        <option value="10">10px</option>
+        <option value="12">12px</option>
+        <option value="14" selected>14px</option>
+        <option value="16">16px</option>
+        <option value="18">18px</option>
+        <option value="20">20px</option>
+        <option value="24">24px</option>
+        <option value="28">28px</option>
+        <option value="32">32px</option>
+      </select>
+
+      <button id="format-bold" title="Bold" style="padding:6px 10px">B</button>
+      <button id="format-italic" title="Italic" style="padding:6px 10px">I</button>
+      <button id="format-underline" title="Underline" style="padding:6px 10px">U</button>
+
+      <div style="flex:1"></div>
+      <small style="color:#666">Select an element then change formatting — preview will reflect styles.</small>
     </div>
     <div id="workspace">
       <div id="toolbox">
@@ -135,5 +159,6 @@
 
     <!-- APP JS -->
     <script src="../layout/index.js"></script>
+    
   </body>
 </html>
