@@ -115,7 +115,17 @@ const Renderer = {
       contentDiv.contentEditable = true;
       contentDiv.textContent = content || 'Text';
     } else {
-      contentDiv.textContent = `[${key}]`;
+      // For field elements, show a sample value when placed in header/footer
+      if (key) {
+        const parentPart = parent?.dataset?.part;
+        if ((parentPart === 'header' || parentPart === 'footer') && Store.data && Store.data.length > 0) {
+          contentDiv.textContent = Store.data[0][key] ?? `[${key}]`;
+        } else {
+          contentDiv.textContent = `[${key}]`;
+        }
+      } else {
+        contentDiv.textContent = '';
+      }
     }
 
     // Apply formatting if provided
@@ -266,10 +276,14 @@ const Actions = {
           el.style.fontWeight = e.bold ? 'bold' : 'normal';
           el.style.fontStyle = e.italic ? 'italic' : 'normal';
           el.style.textDecoration = e.underline ? 'underline' : 'none';
-          if (e.type === 'field' && row) el.textContent = row[e.key];
-          else if (e.type === 'calculation')
+          if (e.type === 'field') {
+            if (row) el.textContent = row[e.key];
+            else el.textContent = Store.data && Store.data.length > 0 ? (Store.data[0][e.key] ?? '') : (e.content || '');
+          } else if (e.type === 'calculation') {
             el.textContent = ReportEngine.calculate(e.function, e.field);
-          else el.textContent = e.content;
+          } else {
+            el.textContent = e.content;
+          }
 
           div.appendChild(el);
         });
@@ -599,8 +613,10 @@ const Actions = {
 
     const renderElementHtml = (def, row) => {
       let text = '';
-      if (def.type === 'field' && row) text = row[def.key] ?? '';
-      else if (def.type === 'calculation' && def.field) {
+      if (def.type === 'field') {
+        if (row) text = row[def.key] ?? '';
+        else text = Store.data && Store.data.length > 0 ? (Store.data[0][def.key] ?? '') : (def.content || '');
+      } else if (def.type === 'calculation' && def.field) {
         const vals = Store.data.map((r) => parseFloat(r[def.field] || 0));
         let res = 0;
         if (def.function === 'SUM') res = vals.reduce((a, b) => a + b, 0);
