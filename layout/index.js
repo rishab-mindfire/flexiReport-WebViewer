@@ -189,6 +189,7 @@ const Actions = {
     this.setupDropZones();
     this.setupFormattingBar();
     this.loadHeaders(); // Step 1: Initial Load
+    this.loadHeadersFM();
   },
 
   // Step 1: Load Column names for design
@@ -196,6 +197,46 @@ const Actions = {
     const list = document.getElementById('fields-list');
     list.innerHTML = '<div class="loading-text">Loading fields...</div>';
 
+    setTimeout(async () => {
+      try {
+        const res = await fetch(
+          'http://localhost:8000/demoJSON/layoutHeaderJSON.json'
+        );
+        Store.headers = await res.json();
+        this.refreshToolbox();
+      } catch (err) {
+        list.innerHTML = '<div style="color:red">Header Load Failed</div>';
+      }
+    }, 1800); // Simulated delay
+  },
+
+  async loadHeadersFM(payload) {
+    const list = document.getElementById('fields-list');
+    list.innerHTML = '<div class="loading-text">Loading fields...</div>';
+
+    // If FileMaker provided headers directly, accept them (string or object)
+    if (payload) {
+      try {
+        let headers = payload;
+        if (typeof payload === 'string') headers = JSON.parse(payload);
+
+        // Accept either an array (['col1','col2']) or an object { headers: [...] }
+        if (Array.isArray(headers)) {
+          Store.headers = headers;
+          this.refreshToolbox();
+        } else if (headers && Array.isArray(headers.headers)) {
+          Store.headers = headers.headers;
+          this.refreshToolbox();
+        } else {
+          list.innerHTML = '<div style="color:red">Invalid headers payload from FileMaker</div>';
+        }
+      } catch (e) {
+        list.innerHTML = '<div style="color:red">Invalid JSON from FileMaker</div>';
+      }
+      return;
+    }
+
+    // Fallback: normal fetch behaviour
     setTimeout(async () => {
       try {
         const res = await fetch(
@@ -689,4 +730,11 @@ const Actions = {
 };
 
 Actions.init();
+
+// Expose function so FileMaker (Web Viewer script) can push header JSON directly
+// Usage from FM: webviewer.ExecuteJavaScript(`window.receiveHeadersFromFM(${JSON.stringify(yourArrayOrObj)})`)
+window.receiveHeadersFromFM = function (jsonPayload) {
+  Actions.loadHeadersFM(jsonPayload);
+};
+
 window.app = Actions;
