@@ -420,9 +420,10 @@ const Actions = {
       };
     }
 
-    // Deselect formatting when clicking canvas
+    // Deselect formatting when clicking outside both canvas and the formatting bar
     document.addEventListener('click', (ev) => {
-      if (!ev.target.closest('.canvas-element')) {
+      // Ignore clicks inside a canvas element or inside the formatting bar
+      if (!ev.target.closest('.canvas-element') && !ev.target.closest('#format-bar')) {
         ['format-bold', 'format-italic', 'format-underline'].forEach((id) => {
           const btn = document.getElementById(id);
           if (btn) btn.classList.remove('active');
