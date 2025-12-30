@@ -2,8 +2,8 @@
  * 1. STATE & DATA STORE
  */
 const Store = {
-  data: [], // Full row data (loaded only on preview)
-  headers: [], // Column names (loaded on startup)
+  data: [],
+  headers: [],
   selectedElement: null,
 };
 
@@ -54,9 +54,15 @@ const ReportEngine = {
             : e.dataset.fontSize
             ? parseInt(e.dataset.fontSize)
             : null;
-          const bold = (contentEl?.style.fontWeight || '') === 'bold' || e.dataset.bold === '1';
-          const italic = (contentEl?.style.fontStyle || '') === 'italic' || e.dataset.italic === '1';
-          const underline = (contentEl?.style.textDecoration || '') === 'underline' || e.dataset.underline === '1';
+          const bold =
+            (contentEl?.style.fontWeight || '') === 'bold' ||
+            e.dataset.bold === '1';
+          const italic =
+            (contentEl?.style.fontStyle || '') === 'italic' ||
+            e.dataset.italic === '1';
+          const underline =
+            (contentEl?.style.textDecoration || '') === 'underline' ||
+            e.dataset.underline === '1';
 
           return {
             type: type,
@@ -85,7 +91,20 @@ const ReportEngine = {
  */
 const Renderer = {
   createCanvasElement(parent, config) {
-    const { x, y, type, key, content, w = 150, h = 22, field, fontSize, bold, italic, underline } = config;
+    const {
+      x,
+      y,
+      type,
+      key,
+      content,
+      w = 150,
+      h = 22,
+      field,
+      fontSize,
+      bold,
+      italic,
+      underline,
+    } = config;
     const funcName = config.function || config.func;
 
     const el = document.createElement('div');
@@ -118,7 +137,11 @@ const Renderer = {
       // For field elements, show a sample value when placed in header/footer
       if (key) {
         const parentPart = parent?.dataset?.part;
-        if ((parentPart === 'header' || parentPart === 'footer') && Store.data && Store.data.length > 0) {
+        if (
+          (parentPart === 'header' || parentPart === 'footer') &&
+          Store.data &&
+          Store.data.length > 0
+        ) {
           contentDiv.textContent = Store.data[0][key] ?? `[${key}]`;
         } else {
           contentDiv.textContent = `[${key}]`;
@@ -134,7 +157,8 @@ const Renderer = {
       if (fs) cd.style.fontSize = (fs ? String(fs) : 14) + 'px';
       if (bold || el.dataset.bold === '1') cd.style.fontWeight = 'bold';
       if (italic || el.dataset.italic === '1') cd.style.fontStyle = 'italic';
-      if (underline || el.dataset.underline === '1') cd.style.textDecoration = 'underline';
+      if (underline || el.dataset.underline === '1')
+        cd.style.textDecoration = 'underline';
     };
     applyFormattingToContent(el, contentDiv);
 
@@ -189,54 +213,13 @@ const Actions = {
     this.setupDropZones();
     this.setupFormattingBar();
     this.loadHeaders(); // Step 1: Initial Load
-    this.loadHeadersFM();
   },
 
-  // Step 1: Load Column names for design
+  //  Step 1: Load Column names for design
   async loadHeaders() {
     const list = document.getElementById('fields-list');
     list.innerHTML = '<div class="loading-text">Loading fields...</div>';
 
-    setTimeout(async () => {
-      try {
-        const res = await fetch(
-          'http://localhost:8000/demoJSON/layoutHeaderJSON.json'
-        );
-        Store.headers = await res.json();
-        this.refreshToolbox();
-      } catch (err) {
-        list.innerHTML = '<div style="color:red">Header Load Failed</div>';
-      }
-    }, 1800); // Simulated delay
-  },
-
-  async loadHeadersFM(payload) {
-    const list = document.getElementById('fields-list');
-    list.innerHTML = '<div class="loading-text">Loading fields...</div>';
-
-    // If FileMaker provided headers directly, accept them (string or object)
-    if (payload) {
-      try {
-        let headers = payload;
-        if (typeof payload === 'string') headers = JSON.parse(payload);
-
-        // Accept either an array (['col1','col2']) or an object { headers: [...] }
-        if (Array.isArray(headers)) {
-          Store.headers = headers;
-          this.refreshToolbox();
-        } else if (headers && Array.isArray(headers.headers)) {
-          Store.headers = headers.headers;
-          this.refreshToolbox();
-        } else {
-          list.innerHTML = '<div style="color:red">Invalid headers payload from FileMaker</div>';
-        }
-      } catch (e) {
-        list.innerHTML = '<div style="color:red">Invalid JSON from FileMaker</div>';
-      }
-      return;
-    }
-
-    // Fallback: normal fetch behaviour
     setTimeout(async () => {
       try {
         const res = await fetch(
@@ -274,6 +257,8 @@ const Actions = {
     modal.style.display = 'flex';
     out.innerHTML =
       '<div class="loading-text" style="text-align:center; width:100%; margin-top:50px;">Calculating report data...</div>';
+    //call filemkaer script to recieve JSON data
+    // FileMaker.PerformScript('GenerateReportJSON');
 
     setTimeout(async () => {
       try {
@@ -319,7 +304,11 @@ const Actions = {
           el.style.textDecoration = e.underline ? 'underline' : 'none';
           if (e.type === 'field') {
             if (row) el.textContent = row[e.key];
-            else el.textContent = Store.data && Store.data.length > 0 ? (Store.data[0][e.key] ?? '') : (e.content || '');
+            else
+              el.textContent =
+                Store.data && Store.data.length > 0
+                  ? Store.data[0][e.key] ?? ''
+                  : e.content || '';
           } else if (e.type === 'calculation') {
             el.textContent = ReportEngine.calculate(e.function, e.field);
           } else {
@@ -373,10 +362,19 @@ const Actions = {
 
     // Sync formatting toolbar to the selected element
     const contentEl = el.querySelector('.element-content');
-    const fs = contentEl?.style.fontSize ? parseInt(contentEl.style.fontSize) : el.dataset.fontSize ? parseInt(el.dataset.fontSize) : 14;
-    const bold = (contentEl?.style.fontWeight || '') === 'bold' || el.dataset.bold === '1';
-    const italic = (contentEl?.style.fontStyle || '') === 'italic' || el.dataset.italic === '1';
-    const underline = (contentEl?.style.textDecoration || '') === 'underline' || el.dataset.underline === '1';
+    const fs = contentEl?.style.fontSize
+      ? parseInt(contentEl.style.fontSize)
+      : el.dataset.fontSize
+      ? parseInt(el.dataset.fontSize)
+      : 14;
+    const bold =
+      (contentEl?.style.fontWeight || '') === 'bold' || el.dataset.bold === '1';
+    const italic =
+      (contentEl?.style.fontStyle || '') === 'italic' ||
+      el.dataset.italic === '1';
+    const underline =
+      (contentEl?.style.textDecoration || '') === 'underline' ||
+      el.dataset.underline === '1';
 
     const fsSelect = document.getElementById('format-fontsize');
     const bBtn = document.getElementById('format-bold');
@@ -464,7 +462,10 @@ const Actions = {
     // Deselect formatting when clicking outside both canvas and the formatting bar
     document.addEventListener('click', (ev) => {
       // Ignore clicks inside a canvas element or inside the formatting bar
-      if (!ev.target.closest('.canvas-element') && !ev.target.closest('#format-bar')) {
+      if (
+        !ev.target.closest('.canvas-element') &&
+        !ev.target.closest('#format-bar')
+      ) {
         ['format-bold', 'format-italic', 'format-underline'].forEach((id) => {
           const btn = document.getElementById(id);
           if (btn) btn.classList.remove('active');
@@ -657,7 +658,11 @@ const Actions = {
       let text = '';
       if (def.type === 'field') {
         if (row) text = row[def.key] ?? '';
-        else text = Store.data && Store.data.length > 0 ? (Store.data[0][def.key] ?? '') : (def.content || '');
+        else
+          text =
+            Store.data && Store.data.length > 0
+              ? Store.data[0][def.key] ?? ''
+              : def.content || '';
       } else if (def.type === 'calculation' && def.field) {
         const vals = Store.data.map((r) => parseFloat(r[def.field] || 0));
         let res = 0;
@@ -674,7 +679,9 @@ const Actions = {
       if (def.italic) extraStyle += `;font-style:italic`;
       if (def.underline) extraStyle += `;text-decoration:underline`;
 
-      return `<div class="r-element" style="${extraStyle}">${escapeHtml(text)}</div>`;
+      return `<div class="r-element" style="${extraStyle}">${escapeHtml(
+        text
+      )}</div>`;
     };
 
     let bodyHtml = '<div class="page">';
@@ -730,11 +737,38 @@ const Actions = {
 };
 
 Actions.init();
+window.app = Actions;
 
-// Expose function so FileMaker (Web Viewer script) can push header JSON directly
-// Usage from FM: webviewer.ExecuteJavaScript(`window.receiveHeadersFromFM(${JSON.stringify(yourArrayOrObj)})`)
-window.receiveHeadersFromFM = function (jsonPayload) {
-  Actions.loadHeadersFM(jsonPayload);
+// -------------------------------------------
+//   Fielmaker functions call
+// -------------------------------------------
+//  load column names/ fieds from filemaker
+Actions.loadHeadersFromFM = function (headersJSON) {
+  try {
+    const arr = JSON.parse(headersJSON);
+    Store.headers = Array.isArray(arr) ? arr : Object.values(arr);
+    Actions.refreshToolbox();
+  } catch (e) {
+    list.innerHTML = '<div style="color:red">Failed to load header !</div>';
+    console.error(e);
+  }
 };
 
-window.app = Actions;
+//  load all JSON DATA from external source through filmaker script
+Actions.generatePreviewFromFM = function (JSONData) {
+  console.log(JSONData);
+  try {
+    const out = document.getElementById('preview-content');
+    const schema = ReportEngine.getSchema();
+    const data = JSON.parse(JSONData);
+    Store.data = Array.isArray(data) ? data : data.data;
+    Actions.renderPreviewHTML(schema, out);
+  } catch (e) {
+    out.innerHTML = '<div style="color:red">Error loading full dataset.</div>';
+    console.error(e);
+  }
+};
+
+// expose to FileMaker Web Viewer
+window.loadHeadersFromFM = Actions.loadHeadersFromFM;
+window.generatePreviewFromFM = Actions.generatePreviewFromFM;
