@@ -220,17 +220,17 @@ const Actions = {
     const list = document.getElementById('fields-list');
     list.innerHTML = '<div class="loading-text">Loading fields...</div>';
 
-    setTimeout(async () => {
-      try {
-        const res = await fetch(
-          'http://localhost:8000/demoJSON/layoutHeaderJSON.json'
-        );
-        Store.headers = await res.json();
-        this.refreshToolbox();
-      } catch (err) {
-        list.innerHTML = '<div style="color:red">Header Load Failed</div>';
-      }
-    }, 1800); // Simulated delay
+    // setTimeout(async () => {
+    //   try {
+    //     const res = await fetch(
+    //       'http://localhost:8000/demoJSON/layoutHeaderJSON.json'
+    //     );
+    //     Store.headers = await res.json();
+    //     this.refreshToolbox();
+    //   } catch (err) {
+    //     list.innerHTML = '<div style="color:red">Header Load Failed</div>';
+    //   }
+    // }, 1800); // Simulated delay
   },
 
   refreshToolbox() {
@@ -258,20 +258,20 @@ const Actions = {
     out.innerHTML =
       '<div class="loading-text" style="text-align:center; width:100%; margin-top:50px;">Calculating report data...</div>';
     //call filemkaer script to recieve JSON data
-    // FileMaker.PerformScript('GenerateReportJSON');
+    FileMaker.PerformScript('GenerateReportJSON');
 
-    setTimeout(async () => {
-      try {
-        const res = await fetch(
-          'http://localhost:8000/demoJSON/layoutJSON.json'
-        );
-        Store.data = await res.json();
-        this.renderPreviewHTML(schema, out);
-      } catch (err) {
-        out.innerHTML =
-          '<div style="color:red">Error loading full dataset.</div>';
-      }
-    }, 1200); // Simulated delay
+    // setTimeout(async () => {
+    //   try {
+    //     const res = await fetch(
+    //       'http://localhost:8000/demoJSON/layoutJSON.json'
+    //     );
+    //     Store.data = await res.json();
+    //     this.renderPreviewHTML(schema, out);
+    //   } catch (err) {
+    //     out.innerHTML =
+    //       '<div style="color:red">Error loading full dataset.</div>';
+    //   }
+    // }, 1200); // Simulated delay
   },
 
   renderPreviewHTML(s, container) {
@@ -580,13 +580,18 @@ const Actions = {
         };
     });
   },
-  loadFromPrompt() {
+  loadFromPrompt(jsonData) {
     if (Store.headers.length === 0) {
       return alert('Please wait for design fields to load.');
     }
-
-    const raw = prompt('Paste JSON:');
-    if (!raw) return;
+    let raw = jsonData;
+    if (!raw) {
+      raw = prompt('Paste schema JSON:');
+    }
+    if (!raw) {
+      console.warn('No JSON provided');
+      return;
+    }
 
     try {
       const schema = JSON.parse(raw);
@@ -740,7 +745,7 @@ Actions.init();
 window.app = Actions;
 
 // -------------------------------------------
-//   Fielmaker functions call
+//  ALL  Fielmaker functions call
 // -------------------------------------------
 //  load column names/ fieds from filemaker
 Actions.loadHeadersFromFM = function (headersJSON) {
@@ -754,7 +759,7 @@ Actions.loadHeadersFromFM = function (headersJSON) {
   }
 };
 
-//  load all JSON DATA from external source through filmaker script
+//  load all column JSON DATA from external source through filmaker script
 Actions.generatePreviewFromFM = function (JSONData) {
   console.log(JSONData);
   try {
@@ -766,6 +771,31 @@ Actions.generatePreviewFromFM = function (JSONData) {
   } catch (e) {
     out.innerHTML = '<div style="color:red">Error loading full dataset.</div>';
     console.error(e);
+  }
+};
+
+//  send JSON State to filmaker DB to save state of configuration
+window.saveSchemaToFM = function () {
+  try {
+    const schema = ReportEngine.getSchema();
+    const jsonData = JSON.stringify(schema);
+
+    if (window.FileMaker && FileMaker.PerformScript) {
+      FileMaker.PerformScript('saveJSON', jsonData);
+    } else {
+      console.warn('FileMaker object not available');
+    }
+  } catch (e) {
+    console.error('saveSchemaToFM error:', e);
+  }
+};
+
+//  send JSON state data from filemaker to show state of design
+window.sendSchemaFromFM = function (jsonString) {
+  try {
+    Actions.loadFromPrompt(jsonString);
+  } catch (e) {
+    console.error('error:', e);
   }
 };
 
