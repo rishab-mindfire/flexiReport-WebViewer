@@ -2,8 +2,8 @@
  * 1. STATE & DATA STORE
  */
 const Store = {
-  data: [], // Full row data (loaded only on preview)
-  headers: [], // Column names (loaded on startup)
+  data: [],
+  headers: [],
   selectedElement: null,
 };
 
@@ -134,7 +134,21 @@ const Renderer = {
       contentDiv.contentEditable = true;
       contentDiv.textContent = content || 'Text';
     } else {
-      contentDiv.textContent = `[${key}]`;
+      // For field elements, show a sample value when placed in header/footer
+      if (key) {
+        const parentPart = parent?.dataset?.part;
+        if (
+          (parentPart === 'header' || parentPart === 'footer') &&
+          Store.data &&
+          Store.data.length > 0
+        ) {
+          contentDiv.textContent = Store.data[0][key] ?? `[${key}]`;
+        } else {
+          contentDiv.textContent = `[${key}]`;
+        }
+      } else {
+        contentDiv.textContent = '';
+      }
     }
 
     // Apply formatting if provided
@@ -201,22 +215,22 @@ const Actions = {
     this.loadHeaders(); // Step 1: Initial Load
   },
 
-  // Step 1: Load Column names for design
+  //  Step 1: Load Column names for design
   async loadHeaders() {
     const list = document.getElementById('fields-list');
     list.innerHTML = '<div class="loading-text">Loading fields...</div>';
 
-    setTimeout(async () => {
-      try {
-        const res = await fetch(
-          'http://localhost:8000/demoJSON/layoutHeaderJSON.json'
-        );
-        Store.headers = await res.json();
-        this.refreshToolbox();
-      } catch (err) {
-        list.innerHTML = '<div style="color:red">Header Load Failed</div>';
-      }
-    }, 1800); // Simulated delay
+    // setTimeout(async () => {
+    //   try {
+    //     const res = await fetch(
+    //       'http://localhost:8000/demoJSON/layoutHeaderJSON.json'
+    //     );
+    //     Store.headers = await res.json();
+    //     this.refreshToolbox();
+    //   } catch (err) {
+    //     list.innerHTML = '<div style="color:red">Header Load Failed</div>';
+    //   }
+    // }, 1800); // Simulated delay
   },
 
   refreshToolbox() {
@@ -243,19 +257,21 @@ const Actions = {
     modal.style.display = 'flex';
     out.innerHTML =
       '<div class="loading-text" style="text-align:center; width:100%; margin-top:50px;">Calculating report data...</div>';
+    //call filemkaer script to recieve JSON data
+    FileMaker.PerformScript('GenerateReportJSON');
 
-    setTimeout(async () => {
-      try {
-        const res = await fetch(
-          'http://localhost:8000/demoJSON/layoutJSON.json'
-        );
-        Store.data = await res.json();
-        this.renderPreviewHTML(schema, out);
-      } catch (err) {
-        out.innerHTML =
-          '<div style="color:red">Error loading full dataset.</div>';
-      }
-    }, 1200); // Simulated delay
+    // setTimeout(async () => {
+    //   try {
+    //     const res = await fetch(
+    //       'http://localhost:8000/demoJSON/layoutJSON.json'
+    //     );
+    //     Store.data = await res.json();
+    //     this.renderPreviewHTML(schema, out);
+    //   } catch (err) {
+    //     out.innerHTML =
+    //       '<div style="color:red">Error loading full dataset.</div>';
+    //   }
+    // }, 1200); // Simulated delay
   },
 
   renderPreviewHTML(s, container) {
@@ -286,10 +302,18 @@ const Actions = {
           el.style.fontWeight = e.bold ? 'bold' : 'normal';
           el.style.fontStyle = e.italic ? 'italic' : 'normal';
           el.style.textDecoration = e.underline ? 'underline' : 'none';
-          if (e.type === 'field' && row) el.textContent = row[e.key];
-          else if (e.type === 'calculation')
+          if (e.type === 'field') {
+            if (row) el.textContent = row[e.key];
+            else
+              el.textContent =
+                Store.data && Store.data.length > 0
+                  ? Store.data[0][e.key] ?? ''
+                  : e.content || '';
+          } else if (e.type === 'calculation') {
             el.textContent = ReportEngine.calculate(e.function, e.field);
-          else el.textContent = e.content;
+          } else {
+            el.textContent = e.content;
+          }
 
           div.appendChild(el);
         });
@@ -435,9 +459,13 @@ const Actions = {
       };
     }
 
-    // Deselect formatting when clicking canvas
+    // Deselect formatting when clicking outside both canvas and the formatting bar
     document.addEventListener('click', (ev) => {
-      if (!ev.target.closest('.canvas-element')) {
+      // Ignore clicks inside a canvas element or inside the formatting bar
+      if (
+        !ev.target.closest('.canvas-element') &&
+        !ev.target.closest('#format-bar')
+      ) {
         ['format-bold', 'format-italic', 'format-underline'].forEach((id) => {
           const btn = document.getElementById(id);
           if (btn) btn.classList.remove('active');
@@ -628,8 +656,14 @@ const Actions = {
 
     const renderElementHtml = (def, row) => {
       let text = '';
-      if (def.type === 'field' && row) text = row[def.key] ?? '';
-      else if (def.type === 'calculation' && def.field) {
+      if (def.type === 'field') {
+        if (row) text = row[def.key] ?? '';
+        else
+          text =
+            Store.data && Store.data.length > 0
+              ? Store.data[0][def.key] ?? ''
+              : def.content || '';
+      } else if (def.type === 'calculation' && def.field) {
         const vals = Store.data.map((r) => parseFloat(r[def.field] || 0));
         let res = 0;
         if (def.function === 'SUM') res = vals.reduce((a, b) => a + b, 0);
@@ -704,3 +738,37 @@ const Actions = {
 
 Actions.init();
 window.app = Actions;
+
+// -------------------------------------------
+//   Fielmaker functions call
+// -------------------------------------------
+//  load column names/ fieds from filemaker
+Actions.loadHeadersFromFM = function (headersJSON) {
+  try {
+    const arr = JSON.parse(headersJSON);
+    Store.headers = Array.isArray(arr) ? arr : Object.values(arr);
+    Actions.refreshToolbox();
+  } catch (e) {
+    list.innerHTML = '<div style="color:red">Failed to load header !</div>';
+    console.error(e);
+  }
+};
+
+//  load all JSON DATA from external source through filmaker script
+Actions.generatePreviewFromFM = function (JSONData) {
+  console.log(JSONData);
+  try {
+    const out = document.getElementById('preview-content');
+    const schema = ReportEngine.getSchema();
+    const data = JSON.parse(JSONData);
+    Store.data = Array.isArray(data) ? data : data.data;
+    Actions.renderPreviewHTML(schema, out);
+  } catch (e) {
+    out.innerHTML = '<div style="color:red">Error loading full dataset.</div>';
+    console.error(e);
+  }
+};
+
+// expose to FileMaker Web Viewer
+window.loadHeadersFromFM = Actions.loadHeadersFromFM;
+window.generatePreviewFromFM = Actions.generatePreviewFromFM;
