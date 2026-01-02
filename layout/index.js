@@ -220,17 +220,17 @@ const Actions = {
     const list = document.getElementById('fields-list');
     list.innerHTML = '<div class="loading-text">Loading fields...</div>';
 
-    // setTimeout(async () => {
-    //   try {
-    //     const res = await fetch(
-    //       'http://localhost:8000/demoJSON/layoutHeaderJSON.json'
-    //     );
-    //     Store.headers = await res.json();
-    //     this.refreshToolbox();
-    //   } catch (err) {
-    //     list.innerHTML = '<div style="color:red">Header Load Failed</div>';
-    //   }
-    // }, 1800); // Simulated delay
+    setTimeout(async () => {
+      try {
+        const res = await fetch(
+          'http://localhost:8000/demoJSON/layoutHeaderJSON.json'
+        );
+        Store.headers = await res.json();
+        this.refreshToolbox();
+      } catch (err) {
+        list.innerHTML = '<div style="color:red">Header Load Failed</div>';
+      }
+    }, 1800); // Simulated delay
   },
 
   refreshToolbox() {
@@ -258,20 +258,20 @@ const Actions = {
     out.innerHTML =
       '<div class="loading-text" style="text-align:center; width:100%; margin-top:50px;">Calculating report data...</div>';
     //call filemkaer script to recieve JSON data
-    FileMaker.PerformScript('GenerateReportJSON');
+    // FileMaker.PerformScript('GenerateReportJSON');
 
-    // setTimeout(async () => {
-    //   try {
-    //     const res = await fetch(
-    //       'http://localhost:8000/demoJSON/layoutJSON.json'
-    //     );
-    //     Store.data = await res.json();
-    //     this.renderPreviewHTML(schema, out);
-    //   } catch (err) {
-    //     out.innerHTML =
-    //       '<div style="color:red">Error loading full dataset.</div>';
-    //   }
-    // }, 1200); // Simulated delay
+    setTimeout(async () => {
+      try {
+        const res = await fetch(
+          'http://localhost:8000/demoJSON/layoutJSON.json'
+        );
+        Store.data = await res.json();
+        this.renderPreviewHTML(schema, out);
+      } catch (err) {
+        out.innerHTML =
+          '<div style="color:red">Error loading full dataset.</div>';
+      }
+    }, 1200); // Simulated delay
   },
 
   renderPreviewHTML(s, container) {
