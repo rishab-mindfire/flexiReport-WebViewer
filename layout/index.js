@@ -220,17 +220,17 @@ const Actions = {
     const list = document.getElementById('fields-list');
     list.innerHTML = '<div class="loading-text">Loading fields...</div>';
 
-    setTimeout(async () => {
-      try {
-        const res = await fetch(
-          'http://localhost:8000/demoJSON/layoutHeaderJSON.json'
-        );
-        Store.headers = await res.json();
-        this.refreshToolbox();
-      } catch (err) {
-        list.innerHTML = '<div style="color:red">Header Load Failed</div>';
-      }
-    }, 1800); // Simulated delay
+    // setTimeout(async () => {
+    //   try {
+    //     const res = await fetch(
+    //       'http://localhost:8000/demoJSON/layoutHeaderJSON.json'
+    //     );
+    //     Store.headers = await res.json();
+    //     this.refreshToolbox();
+    //   } catch (err) {
+    //     list.innerHTML = '<div style="color:red">Header Load Failed</div>';
+    //   }
+    // }, 1800); // Simulated delay
   },
 
   refreshToolbox() {
@@ -258,20 +258,20 @@ const Actions = {
     out.innerHTML =
       '<div class="loading-text" style="text-align:center; width:100%; margin-top:50px;">Calculating report data...</div>';
     //call filemkaer script to recieve JSON data
-    // FileMaker.PerformScript('GenerateReportJSON');
+    FileMaker.PerformScript('GenerateReportJSON');
 
-    setTimeout(async () => {
-      try {
-        const res = await fetch(
-          'http://localhost:8000/demoJSON/layoutJSON.json'
-        );
-        Store.data = await res.json();
-        this.renderPreviewHTML(schema, out);
-      } catch (err) {
-        out.innerHTML =
-          '<div style="color:red">Error loading full dataset.</div>';
-      }
-    }, 1200); // Simulated delay
+    // setTimeout(async () => {
+    //   try {
+    //     const res = await fetch(
+    //       'http://localhost:8000/demoJSON/layoutJSON.json'
+    //     );
+    //     Store.data = await res.json();
+    //     this.renderPreviewHTML(schema, out);
+    //   } catch (err) {
+    //     out.innerHTML =
+    //       '<div style="color:red">Error loading full dataset.</div>';
+    //   }
+    // }, 1200); // Simulated delay
   },
 
   renderPreviewHTML(s, container) {
@@ -646,9 +646,7 @@ const Actions = {
     a.click();
   },
 
-  //get HTML
-  showFullPreviewHTML() {
-    // Get schema from ReportEngine
+  getHTMLContent() {
     const s = ReportEngine.getSchema();
 
     const escapeHtml = (str) =>
@@ -661,6 +659,7 @@ const Actions = {
 
     const renderElementHtml = (def, row) => {
       let text = '';
+
       if (def.type === 'field') {
         if (row) text = row[def.key] ?? '';
         else
@@ -675,9 +674,10 @@ const Actions = {
         else if (def.function === 'AVG')
           res = vals.reduce((a, b) => a + b, 0) / vals.length;
         text = String(res);
-      } else text = def.content || '';
+      } else {
+        text = def.content || '';
+      }
 
-      // Build inline style for font formatting
       let extraStyle = `left:${def.x}px;top:${def.y}px;width:${def.w}px;height:${def.h}px`;
       if (def.fontSize) extraStyle += `;font-size:${def.fontSize}px`;
       if (def.bold) extraStyle += `;font-weight:bold`;
@@ -692,6 +692,7 @@ const Actions = {
     let bodyHtml = '<div class="page">';
     ['header', 'body', 'footer'].forEach((partName) => {
       if (!s.parts[partName]) return;
+
       if (partName === 'body') {
         Store.data.forEach((row) => {
           bodyHtml += `<div class="r-part-body" style="height:${s.parts.body.height}px">`;
@@ -716,7 +717,7 @@ const Actions = {
     .r-element { position: absolute; }
   `;
 
-    const full = `<!doctype html>
+    return `<!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
@@ -726,18 +727,26 @@ const Actions = {
 </head>
 <body>${bodyHtml}</body>
 </html>`;
+  },
+  showFullPreviewHTML() {
+    const html = this.getHTMLContent();
 
     const modal = document.getElementById('html-modal');
     const ta = document.getElementById('html-content');
-    if (ta) ta.value = full;
+
+    if (ta) ta.value = html;
     if (modal) modal.style.display = 'flex';
   },
   // Copy preview HTML from modal
   copyPreviewHTML() {
+    const html = this.getHTMLContent();
     const ta = document.getElementById('html-content');
-    ta.select();
-    document.execCommand('copy');
-    alert('HTML copied');
+    if (ta) {
+      ta.value = html;
+      ta.select();
+      document.execCommand('copy');
+      alert('HTML copied');
+    }
   },
 };
 
@@ -779,9 +788,13 @@ window.saveSchemaToFM = function () {
   try {
     const schema = ReportEngine.getSchema();
     const jsonData = JSON.stringify(schema);
-
     if (window.FileMaker && FileMaker.PerformScript) {
-      FileMaker.PerformScript('saveJSON', jsonData);
+      const htmlContent = Actions.getHTMLContent();
+      const payloadData = {
+        jsonData: jsonData,
+        htmlData: htmlContent,
+      };
+      FileMaker.PerformScript('saveJSON', JSON.stringify(payloadData));
     } else {
       console.warn('FileMaker object not available');
     }
